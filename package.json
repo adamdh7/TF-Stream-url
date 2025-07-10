@@ -1,14 +1,14 @@
 {
-  "name": "tf-stream-backend",
+  "name": "tf-stream-url",
   "version": "1.0.0",
-  "description": "Serverless file upload API for TF-Stream, deployed on Vercel with Cloudinary",
+  "description": "Serverless upload API pour TF-Stream déployé sur Vercel + Cloudinary",
   "scripts": {
     "dev": "vercel dev",
     "start": "vercel dev"
   },
   "dependencies": {
     "cloudinary": "^1.36.0",
-    "formidable": "^2.0.1",
+    "formidable": "^2.1.1",
     "streamifier": "^0.1.1"
   }
 }
