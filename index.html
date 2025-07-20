@@ -1,71 +1,89 @@
-
 <!DOCTYPE html>
 <html lang="ht">
 <head>
   <meta charset="UTF-8" />
-  <title>Upload nan Cloudinary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Imaj / Videyo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: auto; }
-    input, button { font-size: 1rem; margin-top: 1rem; }
-    #result { margin-top: 1.5rem; word-break: break-all; }
-    img, video { margin-top: 1rem; max-width: 100%; height: auto; border: 1px solid #ccc; padding: 4px; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8fafc;
+    }
   </style>
 </head>
-<body>
-  <h1>Upload Imaj / Videyo → Cloudinary</h1>
-  <input type="file" id="fileInput" accept="image/*,video/*" />
-  <br />
-  <button id="uploadBtn">Upload</button>
+<body class="flex items-center justify-center min-h-screen p-4">
 
-  <div id="result"></div>
+  <div class="bg-white w-full max-w-sm rounded-3xl shadow-xl p-6 space-y-5">
+    <h2 class="text-xl font-bold text-center text-gray-800">📤 Upload Imaj / Videyo</h2>
+
+    <input id="fileInput" type="file" accept="image/*,video/*"
+           class="block w-full text-sm text-gray-700 bg-gray-100 rounded-xl border border-gray-300 p-2 cursor-pointer" />
+
+    <button onclick="uploadFile()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">
+      Upload
+    </button>
+
+    <div id="result" class="text-center text-sm text-gray-700"></div>
+
+    <div id="preview" class="mt-4 text-center hidden">
+      <p class="font-semibold text-gray-800 mb-2">✅ Upload Siksè:</p>
+      <img id="previewImg" class="mx-auto rounded-lg shadow max-h-60 hidden" />
+      <video id="previewVid" class="mx-auto rounded-lg shadow max-h-60 hidden" controls></video>
+      <p class="mt-2 break-all text-blue-600 text-xs" id="urlOutput"></p>
+    </div>
+  </div>
 
   <script>
-    // 🛠️ Ranplase ak pwòp valè ou
-    const CLOUD_NAME    = "VOTRE_CLOUD_NAME";    // eg: "mycloud123"
-    const UPLOAD_PRESET = "public_upload";       // non preset ou te kreye
+    const CLOUD_NAME = "dckwrqrur";
+    const UPLOAD_PRESET = "public_upload";
 
-    const fileInput = document.getElementById("fileInput");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const resultDiv = document.getElementById("result");
+    async function uploadFile() {
+      const file = document.getElementById('fileInput').files[0];
+      const result = document.getElementById('result');
+      const preview = document.getElementById('preview');
+      const previewImg = document.getElementById('previewImg');
+      const previewVid = document.getElementById('previewVid');
+      const urlOutput = document.getElementById('urlOutput');
 
-    uploadBtn.addEventListener("click", async () => {
-      const file = fileInput.files[0];
-      if (!file) {
-        alert("Tanpri chwazi yon fichye avan.");
-        return;
-      }
+      result.textContent = "⏳ Nap upload...";
+      preview.classList.add("hidden");
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
 
-      resultDiv.textContent = "Ap telechaje…";
-
       try {
-        const res = await fetch(
-          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
-          { method: "POST", body: formData }
-        );
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+          method: "POST",
+          body: formData
+        });
+
         const data = await res.json();
 
         if (data.secure_url) {
-          resultDiv.innerHTML = `
-            <p><strong>✅ Upload reyalize!</strong></p>
-            <a href="${data.secure_url}" target="_blank">${data.secure_url}</a>
-            <br/>
-            ${
-              data.resource_type === "video"
-                ? `<video controls src="${data.secure_url}"></video>`
-                : `<img src="${data.secure_url}" alt="Uploaded media" />`
-            }
-          `;
+          result.textContent = "";
+          urlOutput.textContent = data.secure_url;
+          preview.classList.remove("hidden");
+
+          if (data.resource_type === "image") {
+            previewImg.src = data.secure_url;
+            previewImg.classList.remove("hidden");
+            previewVid.classList.add("hidden");
+          } else if (data.resource_type === "video") {
+            previewVid.src = data.secure_url;
+            previewVid.classList.remove("hidden");
+            previewImg.classList.add("hidden");
+          }
         } else {
-          resultDiv.textContent = "❌ Erè: " + (data.error?.message || "Upload echwe");
+          result.textContent = "❌ Erè: " + (data.error?.message || "Upload echwe.");
         }
       } catch (err) {
-        resultDiv.textContent = "❌ Erè rezo: " + err.message;
+        result.textContent = "❌ Erè rezo oswa server: " + err.message;
       }
-    });
+    }
   </script>
+
 </body>
 </html>
