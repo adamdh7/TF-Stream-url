@@ -15,20 +15,37 @@
 <body class="flex items-center justify-center min-h-screen p-4">
 
   <div class="bg-white w-full max-w-sm rounded-3xl shadow-xl p-6 space-y-5">
-    <h2 class="text-xl font-bold text-center text-gray-800">📤 Upload Imaj / Videyo</h2>
+    <h2 class="text-xl font-bold text-center text-gray-800">TF-Stream-Url</h2>
 
     <input id="fileInput" type="file" accept="image/*,video/*"
            class="block w-full text-sm text-gray-700 bg-gray-100 rounded-xl border border-gray-300 p-2 cursor-pointer" />
 
-    <button onclick="uploadFile()"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">
-      Upload
-    </button>
+    <div class="flex gap-2">
+      <button id="uploadBtn"
+              class="flex-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">
+        Upload
+      </button>
+      <button id="cancelBtn" class="w-24 bg-gray-200 text-gray-700 font-semibold py-2 rounded-xl hidden">
+        Cancel
+      </button>
+    </div>
 
     <div id="result" class="text-center text-sm text-gray-700"></div>
 
+    <!-- Progress bar -->
+    <div id="progressWrap" class="mt-2 hidden">
+      <div class="text-xs text-gray-600 mb-1">Pwogrè upload</div>
+      <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+        <div id="progressFill" style="width:0%" class="h-3 rounded-full transition-all"></div>
+      </div>
+      <div class="flex justify-between items-center mt-2 text-xs">
+        <div id="progressPct" class="font-mono text-sm">0%</div>
+        <div id="progressInfo" class="text-gray-500 text-xs"></div>
+      </div>
+    </div>
+
     <div id="preview" class="mt-4 text-center hidden">
-      <p class="font-semibold text-gray-800 mb-2">✅ Upload Siksè:</p>
+      <p class="font-semibold text-gray-800 mb-2">Upload Siksè:</p>
       <img id="previewImg" class="mx-auto rounded-lg shadow max-h-60 hidden" />
       <video id="previewVid" class="mx-auto rounded-lg shadow max-h-60 hidden" controls></video>
       <p class="mt-2 break-all text-blue-600 text-xs" id="urlOutput"></p>
@@ -39,51 +56,150 @@
     const CLOUD_NAME = "dckwrqrur";
     const UPLOAD_PRESET = "public_upload";
 
-    async function uploadFile() {
-      const file = document.getElementById('fileInput').files[0];
-      const result = document.getElementById('result');
-      const preview = document.getElementById('preview');
-      const previewImg = document.getElementById('previewImg');
-      const previewVid = document.getElementById('previewVid');
-      const urlOutput = document.getElementById('urlOutput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const fileInput = document.getElementById('fileInput');
+    const result = document.getElementById('result');
+    const preview = document.getElementById('preview');
+    const previewImg = document.getElementById('previewImg');
+    const previewVid = document.getElementById('previewVid');
+    const urlOutput = document.getElementById('urlOutput');
 
-      result.textContent = "⏳ Nap upload...";
+    const progressWrap = document.getElementById('progressWrap');
+    const progressFill = document.getElementById('progressFill');
+    const progressPct = document.getElementById('progressPct');
+    const progressInfo = document.getElementById('progressInfo');
+
+    let currentXhr = null;
+    let startTime = 0;
+
+    uploadBtn.addEventListener('click', uploadFile);
+    cancelBtn.addEventListener('click', () => {
+      if (currentXhr) {
+        currentXhr.abort();
+      }
+    });
+
+    function humanFileSize(bytes) {
+      const thresh = 1024;
+      if (Math.abs(bytes) < thresh) return bytes + ' B';
+      const units = ['KB','MB','GB','TB','PB','EB','ZB','YB'];
+      let u = -1;
+      do {
+        bytes /= thresh;
+        ++u;
+      } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+      return bytes.toFixed(1)+' '+units[u];
+    }
+
+    function resetUI() {
+      progressFill.style.width = '0%';
+      progressPct.textContent = '0%';
+      progressInfo.textContent = '';
+      progressWrap.classList.add('hidden');
+      cancelBtn.classList.add('hidden');
+      uploadBtn.disabled = false;
+    }
+
+    async function uploadFile() {
+      const file = fileInput.files[0];
+      if (!file) {
+        return alert('Tanpri chwazi yon fichye anvan ou upload.');
+      }
+
+      // prepare UI
+      result.textContent = " Nap prepare upload...";
       preview.classList.add("hidden");
+      progressWrap.classList.remove('hidden');
+      cancelBtn.classList.remove('hidden');
+      uploadBtn.disabled = true;
+      startTime = Date.now();
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
 
-      try {
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
-          method: "POST",
-          body: formData
-        });
+      const xhr = new XMLHttpRequest();
+      currentXhr = xhr;
 
-        const data = await res.json();
+      xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`);
 
-        if (data.secure_url) {
-          result.textContent = "";
-          urlOutput.textContent = data.secure_url;
-          preview.classList.remove("hidden");
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          progressFill.style.width = percent + "%";
+          progressPct.textContent = percent + "%";
 
-          if (data.resource_type === "image") {
-            previewImg.src = data.secure_url;
-            previewImg.classList.remove("hidden");
-            previewVid.classList.add("hidden");
-          } else if (data.resource_type === "video") {
-            previewVid.src = data.secure_url;
-            previewVid.classList.remove("hidden");
-            previewImg.classList.add("hidden");
+          const elapsed = (Date.now() - startTime) / 1000; // seconds
+          const speed = e.loaded / Math.max(elapsed, 0.001); // bytes/sec
+          const remainingBytes = e.total - e.loaded;
+          const secsLeft = remainingBytes / Math.max(speed, 1);
+          progressInfo.textContent = `${humanFileSize(e.loaded)} / ${humanFileSize(e.total)} • ${Math.round(secsLeft)}s left`;
+        }
+      };
+
+      xhr.onload = () => {
+        currentXhr = null;
+        uploadBtn.disabled = false;
+        cancelBtn.classList.add('hidden');
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.secure_url) {
+              result.textContent = "";
+              urlOutput.textContent = data.secure_url;
+              preview.classList.remove("hidden");
+
+              if (data.resource_type === "image") {
+                previewImg.src = data.secure_url;
+                previewImg.classList.remove("hidden");
+                previewVid.classList.add("hidden");
+              } else {
+                previewVid.src = data.secure_url;
+                previewVid.classList.remove("hidden");
+                previewImg.classList.add("hidden");
+              }
+
+              // Ensure bar shows 100%
+              progressFill.style.width = '100%';
+              progressPct.textContent = '100%';
+              progressInfo.textContent = `${humanFileSize(file.size)} • Konplete`;
+            } else {
+              result.textContent = " Erè: " + (data.error?.message || "Upload echwe.");
+              resetUI();
+            }
+          } catch (err) {
+            result.textContent = "Erè nan repons sèvè: " + err.message;
+            resetUI();
           }
         } else {
-          result.textContent = "❌ Erè: " + (data.error?.message || "Upload echwe.");
+          result.textContent = `Erè HTTP: ${xhr.status}`;
+          resetUI();
         }
+      };
+
+      xhr.onerror = () => {
+        currentXhr = null;
+        result.textContent = "Erè rezo pandan upload.";
+        resetUI();
+      };
+
+      xhr.onabort = () => {
+        currentXhr = null;
+        result.textContent = "Upload anile.";
+        resetUI();
+      };
+
+      try {
+        xhr.send(formData);
+        result.textContent = "⏳ Upload ap kòmanse...";
       } catch (err) {
-        result.textContent = "❌ Erè rezo oswa server: " + err.message;
+        result.textContent = "❌ Erè: " + err.message;
+        resetUI();
       }
     }
   </script>
 
 </body>
-</html>
+  </html>
