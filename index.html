@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upload Imaj / Videyo</title>
+  <title>TF-Stream-Url</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -193,9 +193,9 @@
 
       try {
         xhr.send(formData);
-        result.textContent = "⏳ Upload ap kòmanse...";
+        result.textContent = "Upload ap kòmanse...";
       } catch (err) {
-        result.textContent = "❌ Erè: " + err.message;
+        result.textContent = " Erè: " + err.message;
         resetUI();
       }
     }
