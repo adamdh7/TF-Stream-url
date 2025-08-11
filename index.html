@@ -4,6 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TF-Stream-Url</title>
+<<<<<<< HEAD
+=======
+
+  <!-- PWA meta and manifest -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TF-Stream-Url" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+>>>>>>> 31a714b (Nouvo kòd soti nan Termux)
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -199,7 +212,27 @@
         resetUI();
       }
     }
+<<<<<<< HEAD
   </script>
 
 </body>
   </html>
+=======
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => {
+            console.log('Service worker registered.', reg);
+          })
+          .catch(err => {
+            console.warn('Service worker registration failed:', err);
+          });
+      });
+    }
+  </script>
+
+</body>
+</html>
+>>>>>>> 31a714b (Nouvo kòd soti nan Termux)

@@ -1,0 +1,21 @@
+{
+  "name": "TF-Stream-Url",
+  "short_name": "TF-Stream-Url",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0ea5e9",
+  "description": "Upload imaj & videyo rapid sou Cloudinary.",
+  "icons": [
+    {
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1754932825/tf-stream-url/IMG-20250810-WA0010_hxe0em.jpg",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1754932825/tf-stream-url/IMG-20250810-WA0010_hxe0em.jpg",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
