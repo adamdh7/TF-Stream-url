@@ -3,7 +3,7 @@
   "short_name": "TF-Stream-Url",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f1214",
+  "background_color": "#0F1214",
   "theme_color": "#000000",
   "description": "Upload imaj & videyo rapid sou Cloudinary.",
   "icons": [
