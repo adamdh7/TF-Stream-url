@@ -3,52 +3,52 @@
   "short_name": "TF-Stream-Url",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#000000",
   "theme_color": "#0ea5e9",
   "description": "Upload imaj & videyo rapid sou Cloudinary.",
   "icons": [
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "96x96",
       "type": "image/jpeg"
     },
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "128x128",
       "type": "image/jpeg"
     },
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "144x144",
       "type": "image/jpeg"
     },
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "152x152",
       "type": "image/jpeg"
     },
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "192x192",
       "type": "image/jpeg"
     },
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "256x256",
       "type": "image/jpeg"
     },
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "384x384",
       "type": "image/jpeg"
     },
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     },
     {
-      "src": "https://files.catbox.moe/l1irsc.jpg",
+      "src": "https://res.cloudinary.com/dckwrqrur/image/upload/v1755617595/tf-stream-url/IMG-20250711-WA0034_zsagw9.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "maskable"
