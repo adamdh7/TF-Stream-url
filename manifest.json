@@ -1,6 +1,6 @@
 {
   "name": "TF-Stream-Url",
-  "short_name": "TF-Stream",
+  "short_name": "TF-Stream-Url",
   "description": "Upload imaj & videyo rapid sou Cloudinary.",
   "lang": "fr-HT",
   "start_url": "/?utm_source=web_app",
