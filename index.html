@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="ht">
+<!DOCTYPE html><html lang="ht">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TF-Stream-Url</title>
-
+  <title>TF-Stream-Url (ak Adstera)</title>
   <!-- PWA meta and manifest -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#2563eb" />
@@ -13,58 +11,82 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="TF-Stream-Url" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #f8fafc;
-    }
+      margin: 0;
+    }/* Ad layer styles */
+.ad-layer {
+  pointer-events: auto;
+  z-index: 9999;
+}
+
+/* Ensure main UI is above ads so inputs stay clickable by default */
+#mainUI {
+  position: relative;
+  z-index: 10001;
+}
+
+/* Small offsets so the centered UI isn't fully covered */
+#ad-left, #ad-right { width: 90px; max-width: 120px; }
+#ad-top, #ad-bottom { height: 90px; }
+
+/* Make sure ads don't push page layout */
+.ad-frame { display: block; }
+
+/* Slight transparency so UI looks "sal" but still visible */
+.ad-layer iframe, .ad-layer > div { opacity: 0.98; }
+
+/* subtle feedback when URL copied */
+.copied {
+  color: #059669; /* green */
+  font-weight: 600;
+}
+
   </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="relative">  <!-- main UI (left exactly as you gave it) -->  <div id="mainUI" class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-xl p-6 space-y-5">
+      <h2 class="text-xl font-bold text-center text-gray-800">TF-Stream-Url</h2>
+      <input id="fileInput" type="file" accept="image/*,video/*" class="block w-full text-sm text-gray-700 bg-gray-100 rounded-xl border border-gray-300 p-2 cursor-pointer" /><div class="flex gap-2">
+    <button id="uploadBtn" class="flex-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">Upload</button>
+    <button id="cancelBtn" class="w-24 bg-gray-200 text-gray-700 font-semibold py-2 rounded-xl hidden">Cancel</button>
+  </div>
 
-  <div class="bg-white w-full max-w-sm rounded-3xl shadow-xl p-6 space-y-5">
-    <h2 class="text-xl font-bold text-center text-gray-800">TF-Stream-Url</h2>
+  <div id="result" class="text-center text-sm text-gray-700"></div>
 
-    <input id="fileInput" type="file" accept="image/*,video/*"
-           class="block w-full text-sm text-gray-700 bg-gray-100 rounded-xl border border-gray-300 p-2 cursor-pointer" />
-
-    <div class="flex gap-2">
-      <button id="uploadBtn"
-              class="flex-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">
-        Upload
-      </button>
-      <button id="cancelBtn" class="w-24 bg-gray-200 text-gray-700 font-semibold py-2 rounded-xl hidden">
-        Cancel
-      </button>
+  <!-- Progress bar -->
+  <div id="progressWrap" class="mt-2 hidden">
+    <div class="text-xs text-gray-600 mb-1">Pwogrè upload</div>
+    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+      <div id="progressFill" style="width:0%" class="h-3 rounded-full transition-all"></div>
     </div>
-
-    <div id="result" class="text-center text-sm text-gray-700"></div>
-
-    <!-- Progress bar -->
-    <div id="progressWrap" class="mt-2 hidden">
-      <div class="text-xs text-gray-600 mb-1">Pwogrè upload</div>
-      <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-        <div id="progressFill" style="width:0%" class="h-3 rounded-full transition-all"></div>
-      </div>
-      <div class="flex justify-between items-center mt-2 text-xs">
-        <div id="progressPct" class="font-mono text-sm">0%</div>
-        <div id="progressInfo" class="text-gray-500 text-xs"></div>
-      </div>
-    </div>
-
-    <div id="preview" class="mt-4 text-center hidden">
-      <p class="font-semibold text-gray-800 mb-2">Upload Siksè:</p>
-      <img id="previewImg" class="mx-auto rounded-lg shadow max-h-60 hidden" />
-      <video id="previewVid" class="mx-auto rounded-lg shadow max-h-60 hidden" controls></video>
-      <p class="mt-2 break-all text-blue-600 text-xs" id="urlOutput"></p>
+    <div class="flex justify-between items-center mt-2 text-xs">
+      <div id="progressPct" class="font-mono text-sm">0%</div>
+      <div id="progressInfo" class="text-gray-500 text-xs"></div>
     </div>
   </div>
 
-  <script>
+  <div id="preview" class="mt-4 text-center hidden">
+    <p class="font-semibold text-gray-800 mb-2">Upload Siksè:</p>
+    <img id="previewImg" class="mx-auto rounded-lg shadow max-h-60 hidden" />
+    <video id="previewVid" class="mx-auto rounded-lg shadow max-h-60 hidden" controls></video>
+    <p class="mt-2 break-all text-blue-600 text-xs" id="urlOutput" style="cursor:pointer"></p>
+  </div>
+
+</div>
+
+  </div>  <!-- Ad containers: top, left, right, bottom -->  <div id="ad-top" class="ad-layer fixed top-0 left-0 w-full flex justify-center items-start pointer-events-auto"></div>
+  <div id="ad-left" class="ad-layer fixed top-1/4 left-0 h-1/2 flex items-center pointer-events-auto"></div>
+  <div id="ad-right" class="ad-layer fixed top-1/4 right-0 h-1/2 flex items-center pointer-events-auto"></div>
+  <div id="ad-bottom" class="ad-layer fixed bottom-0 left-0 w-full flex justify-center items-end pointer-events-auto"></div>  <script>
     const CLOUD_NAME = "dckwrqrur";
     const UPLOAD_PRESET = "public_upload";
+
+    // Link to ad landing (kept for reference but NOT auto-opened)
+    const AD_CLICK_URL = "https://pantherinvincible.com/sadhw4qdv?key=e35e9b7b85c8cbdf30766ff60b9f0017";
 
     const uploadBtn = document.getElementById('uploadBtn');
     const cancelBtn = document.getElementById('cancelBtn');
@@ -89,6 +111,16 @@
         currentXhr.abort();
       }
     });
+
+    // temporarily disable ad clicks during critical UI interactions
+    function disableAdClicks(ms = 2000){
+      const ads = document.querySelectorAll('.ad-layer');
+      ads.forEach(a => a.style.pointerEvents = 'none');
+      setTimeout(()=>ads.forEach(a => a.style.pointerEvents = 'auto'), ms);
+    }
+
+    fileInput.addEventListener('click', ()=> disableAdClicks(2000));
+    uploadBtn.addEventListener('mousedown', ()=> disableAdClicks(3000));
 
     function humanFileSize(bytes) {
       const thresh = 1024;
@@ -125,6 +157,9 @@
       uploadBtn.disabled = true;
       startTime = Date.now();
 
+      // disable ad clicks while uploading
+      disableAdClicks(5000);
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
@@ -148,7 +183,7 @@
         }
       };
 
-      xhr.onload = () => {
+      xhr.onload = async () => {
         currentXhr = null;
         uploadBtn.disabled = false;
         cancelBtn.classList.add('hidden');
@@ -175,6 +210,18 @@
               progressFill.style.width = '100%';
               progressPct.textContent = '100%';
               progressInfo.textContent = `${humanFileSize(file.size)} • Konplete`;
+
+              // --- TRY AUTOMATIC COPY TO CLIPBOARD (may fail if browser blocks) ---
+              try {
+                await navigator.clipboard.writeText(data.secure_url);
+                result.innerHTML = '<span class="copied">URL otomatikman kopi nan clipboard ✅</span>';
+                setTimeout(()=> result.textContent = '', 2500);
+              } catch (err) {
+                // fallback: show small tip to click the URL to copy manually
+                result.textContent = 'Upload konplete — klike URL la pou kopi.';
+              }
+              // --- end auto-copy ---
+
             } else {
               result.textContent = " Erè: " + (data.error?.message || "Upload echwe.");
               resetUI();
@@ -210,6 +257,21 @@
       }
     }
 
+    // copy url to clipboard when user clicks it; while copying, avoid ad clicks
+    urlOutput.addEventListener('click', async (ev) => {
+      ev.stopPropagation(); // ensure our global handler doesn't hijack this event
+      const text = urlOutput.textContent.trim();
+      if (!text) return;
+      try {
+        disableAdClicks(2000);
+        await navigator.clipboard.writeText(text);
+        result.textContent = 'URL kopi nan clipboard.';
+        setTimeout(()=> result.textContent = '', 2000);
+      } catch (e) {
+        result.textContent = 'Pa kapab kopiye URL la: ' + e.message;
+      }
+    });
+
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -222,7 +284,38 @@
           });
       });
     }
-  </script>
 
-</body>
-</html>
+    /* -------------------------------------------------------
+       GLOBAL CLICK INTERCEPTOR (capturing phase)
+       - This handler used to auto-open ad landing on general clicks.
+       - Auto-opening external ad landing has been REMOVED to avoid
+         illegal/invalid click behavior. The handler now only
+         blocks accidental propagation (no redirects).
+       ------------------------------------------------------- */
+    document.addEventListener('click', function(e) {
+      // if click is inside ad elements => let it pass
+      if (e.target.closest('.ad-layer') || e.target.closest('iframe')) {
+        return;
+      }
+      // allowed interactive controls (user intent to use UI)
+      if (e.target.closest('#fileInput') || e.target.closest('#uploadBtn') || e.target.closest('#urlOutput') || e.target.closest('#cancelBtn')) {
+        return; // allow normal behavior
+      }
+      // Otherwise: do NOT redirect/open ad landing. We simply stop propagation
+      // so other handlers won't treat this as an ad-click. No external windows will open.
+      e.preventDefault();
+      e.stopPropagation();
+      // Log for debugging — NO auto-redirect performed
+      console.warn('Auto-redirect removed: blocked illegal ad open attempt');
+    }, true); // use capture so we intercept before other handlers
+
+  </script>  <!-- Ad scripts replaced exactly as you gave them (left in place) -->  <script async="async" data-cfasync="false" src="//pantherinvincible.com/831d752652add5a4318102e95e23728b/invoke.js"></script>  <div id="container-831d752652add5a4318102e95e23728b" class="ad-layer fixed top-2 left-1"></div>  <script type='text/javascript' src='//pantherinvincible.com/97/a6/20/97a620f293cd665277c661660533234e.js'></script>  <script type='text/javascript' src='//pantherinvincible.com/8f/36/29/8f362929c71ab43f93c6d86c43889bfb.js'></script>  <!-- NOTE: Hidden/offscreen iframe removed to prevent automatic impression/redirects -->  <script type="text/javascript">
+    atOptions = {
+      'key' : 'a948baf246dd1ff24f0a6fcde286b31b',
+      'format' : 'iframe',
+      'height' : 300,
+      'width' : 160,
+      'params' : {}
+    };
+  </script>  <script type="text/javascript" src="//pantherinvincible.com/a948baf246dd1ff24f0a6fcde286b31b/invoke.js"></script></body>
+  </html>
