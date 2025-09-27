@@ -1,9 +1,9 @@
-<!DOCTYPE html><html lang="ht">
+<!DOCTYPE html>
+<html lang="ht">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TF-Stream-Url</title>
-  <!-- PWA meta and manifest -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -13,80 +13,58 @@
   <link rel="apple-touch-icon" href="https://res.cloudinary.com/dckwrqrur/image/upload/v1755996395/tf-stream-url/tfstream-text-only_mo4wml.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8fafc;
-      margin: 0;
-    }/* Ad layer styles */
-.ad-layer {
-  pointer-events: auto;
-  z-index: 9999;
-}
-
-/* Ensure main UI is above ads so inputs stay clickable by default */
-#mainUI {
-  position: relative;
-  z-index: 10001;
-}
-
-/* Small offsets so the centered UI isn't fully covered */
-#ad-left, #ad-right { width: 90px; max-width: 120px; }
-#ad-top, #ad-bottom { height: 90px; }
-
-/* Make sure ads don't push page layout */
-.ad-frame { display: block; }
-
-/* Slight transparency so UI looks "sal" but still visible */
-.ad-layer iframe, .ad-layer > div { opacity: 0.98; }
-
-/* subtle feedback when URL copied */
-.copied {
-  color: #059669; /* green */
-  font-weight: 600;
-}
-
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; margin: 0; }
+    .ad-layer { pointer-events: auto; z-index: 9999; }
+    #mainUI { position: relative; z-index: 10001; }
+    #ad-left, #ad-right { width: 90px; max-width: 120px; }
+    #ad-top, #ad-bottom { height: 90px; }
+    .ad-frame { display: block; }
+    .ad-layer iframe, .ad-layer > div { opacity: 0.98; }
+    .copied { color: #059669; font-weight: 600; }
   </style>
 </head>
-<body class="relative">  <!-- main UI (left exactly as you gave it) -->  <div id="mainUI" class="flex items-center justify-center min-h-screen p-4">
+<body class="relative">
+  <div id="mainUI" class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white w-full max-w-sm rounded-3xl shadow-xl p-6 space-y-5">
       <h2 class="text-xl font-bold text-center text-gray-800">TF-Stream-Url</h2>
-      <input id="fileInput" type="file" accept="image/*,video/*" class="block w-full text-sm text-gray-700 bg-gray-100 rounded-xl border border-gray-300 p-2 cursor-pointer" /><div class="flex gap-2">
-    <button id="uploadBtn" class="flex-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">Upload</button>
-    <button id="cancelBtn" class="w-24 bg-gray-200 text-gray-700 font-semibold py-2 rounded-xl hidden">Cancel</button>
-  </div>
+      <input id="fileInput" type="file" accept="*/*" class="block w-full text-sm text-gray-700 bg-gray-100 rounded-xl border border-gray-300 p-2 cursor-pointer" />
+      <div class="flex gap-2">
+        <button id="uploadBtn" class="flex-1 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition">Upload</button>
+        <button id="cancelBtn" class="w-24 bg-gray-200 text-gray-700 font-semibold py-2 rounded-xl hidden">Cancel</button>
+      </div>
 
-  <div id="result" class="text-center text-sm text-gray-700"></div>
+      <div id="result" class="text-center text-sm text-gray-700"></div>
 
-  <!-- Progress bar -->
-  <div id="progressWrap" class="mt-2 hidden">
-    <div class="text-xs text-gray-600 mb-1">Pwogrè upload</div>
-    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-      <div id="progressFill" style="width:0%" class="h-3 rounded-full transition-all"></div>
+      <div id="progressWrap" class="mt-2 hidden">
+        <div class="text-xs text-gray-600 mb-1">Pwogrè upload</div>
+        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div id="progressFill" style="width:0%" class="h-3 rounded-full transition-all bg-blue-500"></div>
+        </div>
+        <div class="flex justify-between items-center mt-2 text-xs">
+          <div id="progressPct" class="font-mono text-sm">0%</div>
+          <div id="progressInfo" class="text-gray-500 text-xs"></div>
+        </div>
+      </div>
+
+      <div id="preview" class="mt-4 text-center hidden">
+        <p class="font-semibold text-gray-800 mb-2">Upload Siksè:</p>
+        <img id="previewImg" class="mx-auto rounded-lg shadow max-h-60 hidden" />
+        <video id="previewVid" class="mx-auto rounded-lg shadow max-h-60 hidden" controls></video>
+        <div id="rawWrapper" class="mt-2"></div>
+        <p class="mt-2 break-all text-blue-600 text-xs" id="urlOutput" style="cursor:pointer"></p>
+      </div>
+
     </div>
-    <div class="flex justify-between items-center mt-2 text-xs">
-      <div id="progressPct" class="font-mono text-sm">0%</div>
-      <div id="progressInfo" class="text-gray-500 text-xs"></div>
-    </div>
   </div>
 
-  <div id="preview" class="mt-4 text-center hidden">
-    <p class="font-semibold text-gray-800 mb-2">Upload Siksè:</p>
-    <img id="previewImg" class="mx-auto rounded-lg shadow max-h-60 hidden" />
-    <video id="previewVid" class="mx-auto rounded-lg shadow max-h-60 hidden" controls></video>
-    <p class="mt-2 break-all text-blue-600 text-xs" id="urlOutput" style="cursor:pointer"></p>
-  </div>
-
-</div>
-
-  </div>  <!-- Ad containers: top, left, right, bottom -->  <div id="ad-top" class="ad-layer fixed top-0 left-0 w-full flex justify-center items-start pointer-events-auto"></div>
+  <div id="ad-top" class="ad-layer fixed top-0 left-0 w-full flex justify-center items-start pointer-events-auto"></div>
   <div id="ad-left" class="ad-layer fixed top-1/4 left-0 h-1/2 flex items-center pointer-events-auto"></div>
   <div id="ad-right" class="ad-layer fixed top-1/4 right-0 h-1/2 flex items-center pointer-events-auto"></div>
-  <div id="ad-bottom" class="ad-layer fixed bottom-0 left-0 w-full flex justify-center items-end pointer-events-auto"></div>  <script>
+  <div id="ad-bottom" class="ad-layer fixed bottom-0 left-0 w-full flex justify-center items-end pointer-events-auto"></div>
+
+  <script>
     const CLOUD_NAME = "dglludnfq";
     const UPLOAD_PRESET = "public_upload";
-
-    // Link to ad landing (kept for reference but NOT auto-opened)
-    const AD_CLICK_URL = "https://pantherinvincible.com/sadhw4qdv?key=e35e9b7b85c8cbdf30766ff60b9f0017";
 
     const uploadBtn = document.getElementById('uploadBtn');
     const cancelBtn = document.getElementById('cancelBtn');
@@ -95,6 +73,7 @@
     const preview = document.getElementById('preview');
     const previewImg = document.getElementById('previewImg');
     const previewVid = document.getElementById('previewVid');
+    const rawWrapper = document.getElementById('rawWrapper');
     const urlOutput = document.getElementById('urlOutput');
 
     const progressWrap = document.getElementById('progressWrap');
@@ -105,14 +84,13 @@
     let currentXhr = null;
     let startTime = 0;
 
+    fileInput.setAttribute('accept', '*/*');
+
     uploadBtn.addEventListener('click', uploadFile);
     cancelBtn.addEventListener('click', () => {
-      if (currentXhr) {
-        currentXhr.abort();
-      }
+      if (currentXhr) currentXhr.abort();
     });
 
-    // temporarily disable ad clicks during critical UI interactions
     function disableAdClicks(ms = 2000){
       const ads = document.querySelectorAll('.ad-layer');
       ads.forEach(a => a.style.pointerEvents = 'none');
@@ -143,22 +121,41 @@
       uploadBtn.disabled = false;
     }
 
+    function detectResourceType(file) {
+      if (!file || !file.type) return 'raw';
+      const t = file.type.toLowerCase();
+      if (t.startsWith('image/')) return 'image';
+      if (t.startsWith('video/') || t.startsWith('audio/')) return 'video';
+      return 'raw';
+    }
+
+    function escapeHtml(unsafe) {
+      return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     async function uploadFile() {
       const file = fileInput.files[0];
       if (!file) {
         return alert('Tanpri chwazi yon fichye anvan ou upload.');
       }
 
-      // prepare UI
       result.textContent = " Nap prepare upload...";
       preview.classList.add("hidden");
+      rawWrapper.innerHTML = '';
       progressWrap.classList.remove('hidden');
       cancelBtn.classList.remove('hidden');
       uploadBtn.disabled = true;
       startTime = Date.now();
 
-      // disable ad clicks while uploading
       disableAdClicks(5000);
+
+      const resourceType = detectResourceType(file);
+      const endpoint = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`;
 
       const formData = new FormData();
       formData.append("file", file);
@@ -167,7 +164,7 @@
       const xhr = new XMLHttpRequest();
       currentXhr = xhr;
 
-      xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`);
+      xhr.open("POST", endpoint);
 
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
@@ -175,8 +172,8 @@
           progressFill.style.width = percent + "%";
           progressPct.textContent = percent + "%";
 
-          const elapsed = (Date.now() - startTime) / 1000; // seconds
-          const speed = e.loaded / Math.max(elapsed, 0.001); // bytes/sec
+          const elapsed = (Date.now() - startTime) / 1000;
+          const speed = e.loaded / Math.max(elapsed, 0.001);
           const remainingBytes = e.total - e.loaded;
           const secsLeft = remainingBytes / Math.max(speed, 1);
           progressInfo.textContent = `${humanFileSize(e.loaded)} / ${humanFileSize(e.total)} • ${Math.round(secsLeft)}s left`;
@@ -191,39 +188,69 @@
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const data = JSON.parse(xhr.responseText);
-            if (data.secure_url) {
+            const url = data.secure_url || data.url || data.path;
+            if (url) {
               result.textContent = "";
-              urlOutput.textContent = data.secure_url;
+              urlOutput.textContent = url;
+              urlOutput.onclick = () => window.open(url, "_blank");
               preview.classList.remove("hidden");
 
-              if (data.resource_type === "image") {
-                previewImg.src = data.secure_url;
+              if (resourceType === 'image') {
+                previewImg.src = url;
                 previewImg.classList.remove("hidden");
                 previewVid.classList.add("hidden");
-              } else {
-                previewVid.src = data.secure_url;
+                rawWrapper.innerHTML = '';
+              } else if (resourceType === 'video') {
+                previewVid.src = url;
                 previewVid.classList.remove("hidden");
                 previewImg.classList.add("hidden");
+                rawWrapper.innerHTML = '';
+              } else {
+                previewImg.classList.add("hidden");
+                previewVid.classList.add("hidden");
+                const rawHtml = `
+   <div style="
+    padding:12px;
+    border-radius:10px;
+    background:#f3f4f6;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    min-width:160px;
+    max-width:320px;
+    gap:8px;
+  ">
+    <div style="
+      font-weight:600;
+      font-size:14px;
+      color:#0f172a;
+      max-width:100%;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+    ">
+      ${escapeHtml(file.name)}
+    </div>
+  </div>
+`;
+                rawWrapper.innerHTML = rawHtml;
               }
 
-              // Ensure bar shows 100%
               progressFill.style.width = '100%';
               progressPct.textContent = '100%';
               progressInfo.textContent = `${humanFileSize(file.size)} • Konplete`;
 
-              // --- TRY AUTOMATIC COPY TO CLIPBOARD (may fail if browser blocks) ---
               try {
-                await navigator.clipboard.writeText(data.secure_url);
-                result.innerHTML = '<span class="copied">URL otomatikman kopi nan clipboard ✅</span>';
+                await navigator.clipboard.writeText(url);
+                result.innerHTML = '<span class="copied"></span>';
                 setTimeout(()=> result.textContent = '', 2500);
               } catch (err) {
-                // fallback: show small tip to click the URL to copy manually
                 result.textContent = 'Upload konplete — klike URL la pou kopi.';
               }
-              // --- end auto-copy ---
 
             } else {
-              result.textContent = " Erè: " + (data.error?.message || "Upload echwe.");
+              result.textContent = " Erè: repons upload pa gen secure_url.";
               resetUI();
             }
           } catch (err) {
@@ -257,9 +284,8 @@
       }
     }
 
-    // copy url to clipboard when user clicks it; while copying, avoid ad clicks
     urlOutput.addEventListener('click', async (ev) => {
-      ev.stopPropagation(); // ensure our global handler doesn't hijack this event
+      ev.stopPropagation();
       const text = urlOutput.textContent.trim();
       if (!text) return;
       try {
@@ -272,7 +298,6 @@
       }
     });
 
-    // Register service worker for PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
@@ -285,31 +310,24 @@
       });
     }
 
-    /* -------------------------------------------------------
-       GLOBAL CLICK INTERCEPTOR (capturing phase)
-       - This handler used to auto-open ad landing on general clicks.
-       - Auto-opening external ad landing has been REMOVED to avoid
-         illegal/invalid click behavior. The handler now only
-         blocks accidental propagation (no redirects).
-       ------------------------------------------------------- */
     document.addEventListener('click', function(e) {
-      // if click is inside ad elements => let it pass
       if (e.target.closest('.ad-layer') || e.target.closest('iframe')) {
         return;
       }
-      // allowed interactive controls (user intent to use UI)
       if (e.target.closest('#fileInput') || e.target.closest('#uploadBtn') || e.target.closest('#urlOutput') || e.target.closest('#cancelBtn')) {
-        return; // allow normal behavior
+        return;
       }
-      // Otherwise: do NOT redirect/open ad landing. We simply stop propagation
-      // so other handlers won't treat this as an ad-click. No external windows will open.
       e.preventDefault();
       e.stopPropagation();
-      // Log for debugging — NO auto-redirect performed
       console.warn('Auto-redirect removed: blocked illegal ad open attempt');
-    }, true); // use capture so we intercept before other handlers
+    }, true);
+  </script>
 
-  </script>  <!-- Ad scripts replaced exactly as you gave them (left in place) -->  <script async="async" data-cfasync="false" src="//pantherinvincible.com/831d752652add5a4318102e95e23728b/invoke.js"></script>  <div id="container-831d752652add5a4318102e95e23728b" class="ad-layer fixed top-2 left-1"></div>  <script type='text/javascript' src='//pantherinvincible.com/97/a6/20/97a620f293cd665277c661660533234e.js'></script>  <script type='text/javascript' src='//pantherinvincible.com/8f/36/29/8f362929c71ab43f93c6d86c43889bfb.js'></script>  <!-- NOTE: Hidden/offscreen iframe removed to prevent automatic impression/redirects -->  <script type="text/javascript">
+  <script async="async" data-cfasync="false" src="//pantherinvincible.com/831d752652add5a4318102e95e23728b/invoke.js"></script>
+  <div id="container-831d752652add5a4318102e95e23728b" class="ad-layer fixed top-2 left-1"></div>
+  <script type="text/javascript" src="//pantherinvincible.com/97/a6/20/97a620f293cd665277c661660533234e.js"></script>
+  <script type="text/javascript" src="//pantherinvincible.com/8f/36/29/8f362929c71ab43f93c6d86c43889bfb.js"></script>
+  <script type="text/javascript">
     atOptions = {
       'key' : 'a948baf246dd1ff24f0a6fcde286b31b',
       'format' : 'iframe',
@@ -317,5 +335,8 @@
       'width' : 160,
       'params' : {}
     };
-  </script>  <script type="text/javascript" src="//pantherinvincible.com/a948baf246dd1ff24f0a6fcde286b31b/invoke.js"></script></body>
-  </html>
+  </script>
+  <script type="text/javascript" src="//pantherinvincible.com/a948baf246dd1ff24f0a6fcde286b31b/invoke.js"></script>
+</body>
+</html>
+
