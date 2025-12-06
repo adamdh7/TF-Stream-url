@@ -28,7 +28,9 @@
     .info{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
     .name{font-weight:600;font-size:15px;word-break:break-word;white-space:normal}
     .suburl{font-size:11px;color:#888;word-break:anywhere}
-    .group-head{grid-column:1/-1;padding:8px 12px;background:rgba(0,0,0,0.03);border-radius:12px;font-weight:700;color:#222;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .group-head{grid-column:1/-1;padding:10px;border-radius:12px;font-weight:700;color:#222;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,0.03)}
+    .group-top{font-size:16px;color:#111}
+    .group-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px}
     .season-head{grid-column:1/-1;padding:6px 12px;background:rgba(0,0,0,0.02);border-radius:10px;font-weight:700;color:#333;display:flex;justify-content:flex-start;align-items:center;gap:12px}
     .meta{font-size:13px;color:#777}
     .actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -157,6 +159,17 @@
     return { base, season: (season != null) ? toNum(season) : null, ep: (ep != null) ? toNum(ep) : null, numericToken: (numericToken != null) ? Number(numericToken) : null, leadingNumeric: leadingNumeric, hasSeason: !!hasSeason, hasEp: !!hasEp, raw: rawNorm };
   }
 
+  function extractTimestampFromKey(key){
+    if(!key) return null;
+    const m = key.match(/(\d{10,13})/);
+    if(!m) return null;
+    const n = Number(m[1]);
+    if(!Number.isFinite(n)) return null;
+    if(n > 1e12) return n;
+    if(n > 1e9) return n * 1000;
+    return null;
+  }
+
   function intraGroupCompare(a,b){
     const pa = parseParts(a.name||''), pb = parseParts(b.name||'');
     const aIsBaseOnly = (!pa.hasEp && pa.ep==null) && (!pa.hasSeason && pa.season==null);
@@ -179,17 +192,20 @@
   function createGroupHeader(f){
     const head = document.createElement('div'); head.className = 'group-head';
     try { head.dataset.base = f.base || ''; } catch(e){}
-    const left = document.createElement('div'); left.className = 'group-title';
+    const top = document.createElement('div'); top.className = 'group-top';
     const pretty = (f.base || '(sans nom)').replace(/[_\-\s]+/g,' ').trim();
-    left.textContent = pretty;
-    head.appendChild(left);
-    const rightWrap = document.createElement('div'); rightWrap.style.display='flex'; rightWrap.style.gap='8px'; rightWrap.style.alignItems='center';
-    const right = document.createElement('div'); right.style.fontSize='13px'; right.style.color='#555'; right.style.whiteSpace='nowrap'; right.textContent = f.newest ? ('Dernier upload : ' + new Date(Number(f.newest)).toLocaleString()) : '';
-    rightWrap.appendChild(right);
-    const copyAllBtn = document.createElement('button'); copyAllBtn.className='copy-all-btn'; copyAllBtn.title='Copier tout'; copyAllBtn.innerHTML = 'Copier tout';
-    copyAllBtn.addEventListener('click', (ev) => { ev.stopPropagation(); try{ copyGroup(f.base); } catch(e){ console.error(e); } copyAllBtn.classList.add('copied'); setTimeout(()=>copyAllBtn.classList.remove('copied'),1200); });
-    rightWrap.appendChild(copyAllBtn);
-    head.appendChild(rightWrap);
+    top.textContent = pretty;
+    head.appendChild(top);
+    const bottom = document.createElement('div'); bottom.className = 'group-bottom';
+    const right = document.createElement('div'); right.style.fontSize='13px'; right.style.color='#555'; right.style.whiteSpace='nowrap';
+    right.textContent = f.newest ? ('Dernier upload : ' + new Date(Number(f.newest)).toLocaleString()) : '';
+    bottom.appendChild(right);
+    if (typeof f.itemCount === 'number' && f.itemCount > 1) {
+      const copyAllBtn = document.createElement('button'); copyAllBtn.className='copy-all-btn'; copyAllBtn.title='Copier tout'; copyAllBtn.innerHTML = 'Copier tout';
+      copyAllBtn.addEventListener('click', (ev) => { ev.stopPropagation(); try{ copyGroup(f.base); } catch(e){ console.error(e); } copyAllBtn.classList.add('copied'); setTimeout(()=>copyAllBtn.classList.remove('copied'),1200); });
+      bottom.appendChild(copyAllBtn);
+    }
+    head.appendChild(bottom);
     return head;
   }
 
@@ -306,19 +322,22 @@
         groups.get(fbNorm).push(f);
       }
     });
+
     const groupArr = Array.from(groups.entries()).map(([base,items]) => {
       const newest = items.reduce((m,it) => Math.max(m,toNum(it.lastModified)),0);
       const serverIndex = items.reduce((m,it) => Math.min(m, (typeof it.__serverIndex === 'number' ? it.__serverIndex : 9999999)), 9999999);
-      return { base, items, newest, serverIndex };
+      return { base, items, newest, serverIndex, itemCount: items.length };
     });
+
     groupArr.sort((g1,g2) => {
+      const a = toNum(g2.newest) - toNum(g1.newest);
+      if(a !== 0) return a;
       const aHas = g1.serverIndex !== 9999999;
       const bHas = g2.serverIndex !== 9999999;
       if(aHas && bHas) return g1.serverIndex - g2.serverIndex;
-      const a = toNum(g2.newest) - toNum(g1.newest);
-      if(a !== 0) return a;
       return collator.compare(g1.base, g2.base);
     });
+
     const out = [];
     for(const g of groupArr){
       const parsed = g.items.map(it => ({ it, p: parseParts(it.name || '') }));
@@ -340,7 +359,7 @@
           synthesized.push(item);
         }
       }
-      out.push({ __groupHeader:true, base:g.base, newest:g.newest });
+      out.push({ __groupHeader:true, base:g.base, newest:g.newest, itemCount: g.itemCount });
       const seasonMap = new Map();
       function pushToSeason(sKey, item){ const arr = seasonMap.get(sKey) || []; arr.push(item); seasonMap.set(sKey, arr); }
       for(const it of explicitSeason){
@@ -698,17 +717,26 @@
         for (const bucket of data.result) {
           if (bucket && Array.isArray(bucket.objects)) {
             for (const o of bucket.objects) {
-              files.push({ name: o.key || o.name || '', url: o.url || '', size: Number(o.size) || 0, lastModified: o.lastModified || 0 });
+              const key = o.key || o.name || '';
+              const extracted = extractTimestampFromKey(key);
+              const last = o.lastModified ? Number(o.lastModified) : (extracted ? Number(extracted) : Date.now());
+              files.push({ name: key, url: o.url || '', size: Number(o.size) || 0, lastModified: last, bucket: bucket.bucket || null });
             }
           }
         }
       } else if (Array.isArray(data)) {
         for (const f of data) {
-          files.push({ name: f.name || f.key || '', url: f.url || '', size: Number(f.size) || 0, lastModified: f.lastModified || 0 });
+          const key = f.key || f.name || '';
+          const extracted = extractTimestampFromKey(key);
+          const last = f.lastModified ? Number(f.lastModified) : (extracted ? Number(extracted) : Date.now());
+          files.push({ name: key, url: f.url || '', size: Number(f.size) || 0, lastModified: last, bucket: f.bucket || null });
         }
       } else if (data && Array.isArray(data.objects)) {
         for (const o of data.objects) {
-          files.push({ name: o.key || o.name || '', url: o.url || '', size: Number(o.size) || 0, lastModified: o.lastModified || 0 });
+          const key = o.key || o.name || '';
+          const extracted = extractTimestampFromKey(key);
+          const last = o.lastModified ? Number(o.lastModified) : (extracted ? Number(extracted) : Date.now());
+          files.push({ name: key, url: o.url || '', size: Number(o.size) || 0, lastModified: last, bucket: data.bucket || null });
         }
       }
       const seen = new Set(), unique = [];
@@ -746,13 +774,19 @@
             for (const bucket of data.result) {
               if (bucket && Array.isArray(bucket.objects)) {
                 for (const o of bucket.objects) {
-                  arr.push({ name: o.key || o.name || '', url: o.url || '', size: Number(o.size) || 0, lastModified: o.lastModified || 0 });
+                  const key = o.key || o.name || '';
+                  const extracted = extractTimestampFromKey(key);
+                  const last = o.lastModified ? Number(o.lastModified) : (extracted ? Number(extracted) : Date.now());
+                  arr.push({ name: key, url: o.url || '', size: Number(o.size) || 0, lastModified: last, bucket: bucket.bucket || null });
                 }
               }
             }
           } else if (Array.isArray(data)) {
             for (const f of data) {
-              arr.push({ name: f.name || f.key || '', url: f.url || '', size: Number(f.size) || 0, lastModified: f.lastModified || 0 });
+              const key = f.key || f.name || '';
+              const extracted = extractTimestampFromKey(key);
+              const last = f.lastModified ? Number(f.lastModified) : (extracted ? Number(extracted) : Date.now());
+              arr.push({ name: key, url: f.url || '', size: Number(f.size) || 0, lastModified: last, bucket: f.bucket || null });
             }
           }
           const seen = new Set(), unique = [];
@@ -794,4 +828,4 @@
 })();
   </script>
 </body>
-</html>
+  </html>
