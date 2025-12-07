@@ -94,6 +94,39 @@
     return s.replace(/\s+/g,' ').trim().toLowerCase();
   }
 
+  // Normalize key name: remove uploads/ or uploads%2F prefix so names match across buckets
+  function normalizeKeyName(key) {
+    if (!key) return '';
+    let k = String(key || '');
+    try { k = decodeURIComponent(k); } catch(e){}
+    k = k.replace(/^\/+/, '');
+    k = k.replace(/^uploads\//i, '');
+    k = k.replace(/uploads%2F/i, '');
+    return k.trim();
+  }
+
+  function parseDateLike(o) {
+    // o can be { lastModified: '...ms...' } or { uploaded: 'ISO' } or have key with digits
+    if (!o) return Date.now();
+    if (o.lastModified) {
+      const n = Number(o.lastModified);
+      if (!Number.isNaN(n) && n > 0) return n;
+    }
+    if (o.uploaded) {
+      const d = new Date(o.uploaded);
+      if (!isNaN(d.getTime())) return d.getTime();
+    }
+    if (o.uploadedAt) {
+      const n = Number(o.uploadedAt);
+      if (!Number.isNaN(n) && n > 0) return n;
+    }
+    // fallback: try to extract digits from key/name
+    const keyLike = (o.key || o.name || '');
+    const extracted = extractTimestampFromKey(keyLike);
+    if (extracted) return extracted;
+    return Date.now();
+  }
+
   function getPathnameFromUrlOrName(uOrName) {
     if (!uOrName) return '';
     try {
@@ -161,7 +194,7 @@
 
   function extractTimestampFromKey(key){
     if(!key) return null;
-    const m = key.match(/(\d{10,13})/);
+    const m = String(key).match(/(\d{10,13})/);
     if(!m) return null;
     const n = Number(m[1]);
     if(!Number.isFinite(n)) return null;
@@ -329,6 +362,7 @@
       return { base, items, newest, serverIndex, itemCount: items.length };
     });
 
+    // sort groups: newest first (most recent upload on top), fallback to serverIndex then base name
     groupArr.sort((g1,g2) => {
       const a = toNum(g2.newest) - toNum(g1.newest);
       if(a !== 0) return a;
@@ -553,28 +587,69 @@
     updateEmpty();
   }
 
+  // apply incremental file (WS/SSE/add)
   function applyIncrementalFile(file){
     if(!file || !file.url) return;
-    const nf = { name:file.name, url:file.url, size: toNum(file.size), lastModified: toNum(file.lastModified), thumbnail: file.thumbnail || null, __serverIndex: (typeof file.__serverIndex === 'number' ? file.__serverIndex : undefined) };
-    window.allFiles = (window.allFiles || []).filter(x => x.url !== nf.url);
+    // normalized name (strip uploads/ etc) used for grouping & dedupe
+    const normalizedName = normalizeKeyName(file.name || file.key || file.originalName || '');
+    const last = parseDateLike(file);
+    const nf = {
+      name: normalizedName || (file.name || file.key || ''),
+      originalName: (file.name || file.key || file.originalName || ''),
+      url: file.url,
+      size: toNum(file.size),
+      lastModified: Number(last),
+      thumbnail: file.thumbnail || null,
+      __serverIndex: (typeof file.__serverIndex === 'number' ? file.__serverIndex : undefined),
+      bucket: file.bucket || null,
+      key: file.key || null
+    };
+
+    // remove duplicates:
+    // - same url
+    // - same normalized name (so uploads/... and ... are treated the same)
+    // - same original key (if any)
+    window.allFiles = (window.allFiles || []).filter(x => {
+      if(!x) return false;
+      if(x.url === nf.url) return false; // remove old same url
+      // compute normalized existing name
+      const existingNorm = normalizeKeyName(x.originalName || x.name || '');
+      if (existingNorm && normalizedName && existingNorm === normalizedName) return false; // remove older with same normalized name
+      if (x.key && nf.key && x.key === nf.key) return false;
+      return true;
+    });
+
+    // push new file and re-sort by lastModified desc
     window.allFiles.push(nf);
-    const seen = new Set(), uniq = [];
-    for(const it of window.allFiles){ if(!it || !it.url) continue; if(seen.has(it.url)) continue; seen.add(it.url); uniq.push(it); }
-    window.allFiles = uniq;
-    const orderedWithHeaders = buildOrderedList(window.allFiles || []);
-    const flattened = orderedWithHeaders.filter(x => !x.__groupHeader && !x.__seasonHeader);
-    window.allFiles = flattened.slice(0, CONFIG.METADATA_CAP);
+    window.allFiles.sort((a,b) => Number(b.lastModified || 0) - Number(a.lastModified || 0));
+    // cap
+    if(window.allFiles.length > CONFIG.METADATA_CAP) window.allFiles = window.allFiles.slice(0, CONFIG.METADATA_CAP);
+
+    // replace group DOM for this base
     const baseKey = (() => { try { return parseParts(nf.name||'').base; } catch(e) { return normalizeString((nf.name||'').replace(/\.[^.]+$/,'').replace(/\b\d+\b/g,'')); } })();
     replaceGroupDOM(baseKey);
   }
 
   function handleServerMsg(msg){
     if(!msg || !msg.type) return;
-    const normFile = f => ({ name:f.name, url:f.url, size: toNum(f.size), lastModified: toNum(f.lastModified), thumbnail: f.thumbnail || null, __serverIndex: (typeof f.__serverIndex === 'number' ? f.__serverIndex : undefined) });
+    // msg.file expected shape from worker: { name, key, url, size, uploaded, lastModified, bucket }
     if(msg.type === 'full' && Array.isArray(msg.files)){
-      const arr = msg.files.map((f, idx) => { const nf = normFile(f); nf.__serverIndex = idx; return nf; });
-      const seen = new Set(), unique = [];
-      for(const it of arr){ if(!it.url) continue; if(!seen.has(it.url)){ seen.add(it.url); unique.push(it); } }
+      // normalize all, ensure name normalized to strip uploads/
+      const arr = msg.files.map((f, idx) => {
+        const nName = normalizeKeyName(f.name || f.key || '');
+        const last = parseDateLike(f);
+        return { name: nName, originalName: (f.name||f.key||''), url: f.url, size: toNum(f.size), lastModified: Number(last), thumbnail: f.thumbnail || null, __serverIndex: idx, bucket: f.bucket || null, key: f.key || null };
+      });
+      // dedupe by normalized name first then url
+      const byName = new Map();
+      for(const it of arr){
+        const k = normalizeKeyName(it.originalName || it.name || '');
+        if(!byName.has(k) || (byName.get(k).lastModified < it.lastModified)){
+          byName.set(k, it);
+        }
+      }
+      const unique = Array.from(byName.values());
+      unique.sort((a,b) => Number(b.lastModified || 0) - Number(a.lastModified || 0));
       window.allFiles = unique.slice(0, CONFIG.METADATA_CAP);
       fullRerender(); return;
     }
@@ -583,11 +658,11 @@
       return;
     }
     if(msg.type === 'remove'){
-      const ident = msg.url || msg.name;
-      window.allFiles = (window.allFiles||[]).filter(x => x.url !== ident);
+      const ident = msg.url || msg.name || msg.key;
+      window.allFiles = (window.allFiles||[]).filter(x => x.url !== ident && x.key !== ident && normalizeKeyName(x.originalName || x.name || '') !== normalizeKeyName(msg.name || msg.key || ''));
       try {
         const listEl = document.getElementById('fileList');
-        const node = Array.from(listEl.querySelectorAll('[data-url]')).find(n => n.dataset && n.dataset.url === ident);
+        const node = Array.from(listEl.querySelectorAll('[data-url]')).find(n => n.dataset && (n.dataset.url === ident || n.dataset.url === msg.url));
         if(node && node.parentElement) node.parentElement.remove();
       } catch(e){}
       updateEmpty();
@@ -707,6 +782,7 @@
   function debounce(fn,ms=150){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
   document.getElementById('searchInput').addEventListener('input', debounce(applySearchAndRender,140));
 
+  // loadFiles (initial + polling)
   async function loadFiles(){
     try{
       const res = await fetch(CONFIG.FILES_PATH, { cache:'no-store' });
@@ -718,29 +794,60 @@
           if (bucket && Array.isArray(bucket.objects)) {
             for (const o of bucket.objects) {
               const key = o.key || o.name || '';
-              const extracted = extractTimestampFromKey(key);
-              const last = o.lastModified ? Number(o.lastModified) : (extracted ? Number(extracted) : Date.now());
-              files.push({ name: key, url: o.url || '', size: Number(o.size) || 0, lastModified: last, bucket: bucket.bucket || null });
+              const keyNorm = normalizeKeyName(key);
+              const last = parseDateLike(o);
+              files.push({
+                name: keyNorm,
+                originalName: key,
+                url: o.url || '',
+                size: Number(o.size) || 0,
+                lastModified: Number(last),
+                bucket: bucket.bucket || null,
+                key: o.key || null
+              });
             }
           }
         }
       } else if (Array.isArray(data)) {
         for (const f of data) {
           const key = f.key || f.name || '';
-          const extracted = extractTimestampFromKey(key);
-          const last = f.lastModified ? Number(f.lastModified) : (extracted ? Number(extracted) : Date.now());
-          files.push({ name: key, url: f.url || '', size: Number(f.size) || 0, lastModified: last, bucket: f.bucket || null });
+          const keyNorm = normalizeKeyName(key);
+          const last = parseDateLike(f);
+          files.push({
+            name: keyNorm,
+            originalName: key,
+            url: f.url || '',
+            size: Number(f.size) || 0,
+            lastModified: Number(last),
+            bucket: f.bucket || null,
+            key: f.key || null
+          });
         }
       } else if (data && Array.isArray(data.objects)) {
         for (const o of data.objects) {
           const key = o.key || o.name || '';
-          const extracted = extractTimestampFromKey(key);
-          const last = o.lastModified ? Number(o.lastModified) : (extracted ? Number(extracted) : Date.now());
-          files.push({ name: key, url: o.url || '', size: Number(o.size) || 0, lastModified: last, bucket: data.bucket || null });
+          const keyNorm = normalizeKeyName(key);
+          const last = parseDateLike(o);
+          files.push({
+            name: keyNorm,
+            originalName: key,
+            url: o.url || '',
+            size: Number(o.size) || 0,
+            lastModified: Number(last),
+            bucket: data.bucket || null,
+            key: o.key || null
+          });
         }
       }
-      const seen = new Set(), unique = [];
-      for(const it of files){ if(!it.url) continue; if(!seen.has(it.url)){ seen.add(it.url); unique.push(it); } }
+      // dedupe by normalized name (prefer newest)
+      const byName = new Map();
+      for(const it of files){
+        if(!it.url) continue;
+        const n = normalizeKeyName(it.originalName || it.name || '');
+        if(!byName.has(n) || (byName.get(n).lastModified < it.lastModified)) byName.set(n, it);
+      }
+      const unique = Array.from(byName.values());
+      unique.sort((a,b) => Number(b.lastModified || 0) - Number(a.lastModified || 0));
       window.allFiles = unique.slice(0, CONFIG.METADATA_CAP);
       fullRerender();
     }catch(e){ console.error(e); }
@@ -775,22 +882,29 @@
               if (bucket && Array.isArray(bucket.objects)) {
                 for (const o of bucket.objects) {
                   const key = o.key || o.name || '';
-                  const extracted = extractTimestampFromKey(key);
-                  const last = o.lastModified ? Number(o.lastModified) : (extracted ? Number(extracted) : Date.now());
-                  arr.push({ name: key, url: o.url || '', size: Number(o.size) || 0, lastModified: last, bucket: bucket.bucket || null });
+                  const keyNorm = normalizeKeyName(key);
+                  const last = parseDateLike(o);
+                  arr.push({ name: keyNorm, originalName: key, url: o.url || '', size: Number(o.size) || 0, lastModified: Number(last), bucket: bucket.bucket || null, key: o.key || null });
                 }
               }
             }
           } else if (Array.isArray(data)) {
             for (const f of data) {
               const key = f.key || f.name || '';
-              const extracted = extractTimestampFromKey(key);
-              const last = f.lastModified ? Number(f.lastModified) : (extracted ? Number(extracted) : Date.now());
-              arr.push({ name: key, url: f.url || '', size: Number(f.size) || 0, lastModified: last, bucket: f.bucket || null });
+              const keyNorm = normalizeKeyName(key);
+              const last = parseDateLike(f);
+              arr.push({ name: keyNorm, originalName: key, url: f.url || '', size: Number(f.size) || 0, lastModified: Number(last), bucket: f.bucket || null, key: f.key || null });
             }
           }
-          const seen = new Set(), unique = [];
-          for(const it of arr){ if(!it.url) continue; if(!seen.has(it.url)){ seen.add(it.url); unique.push(it); } }
+          // dedupe by normalized name prefer newest
+          const byName = new Map();
+          for(const it of arr){
+            if(!it.url) continue;
+            const n = normalizeKeyName(it.originalName || it.name || '');
+            if(!byName.has(n) || byName.get(n).lastModified < it.lastModified) byName.set(n, it);
+          }
+          const unique = Array.from(byName.values());
+          unique.sort((a,b) => Number(b.lastModified || 0) - Number(a.lastModified || 0));
           window.allFiles = unique.slice(0, CONFIG.METADATA_CAP);
           fullRerender();
         }).catch(()=>{});
