@@ -85,7 +85,7 @@
       }
 
       function extractNumsFromTok(tok, out){
-        if(/^\d{5,}$/.test(tok)) return; // skip long pure numbers (timestamps)
+        if(/^\d{5,}$/.test(tok)) return;
         var m = tok.match(/\d{1,3}/g);
         if(!m) return;
         for(var j=0;j<m.length && out.length<2;j++){
@@ -262,20 +262,28 @@
         try{ preview.dataset.url = f.url || ''; }catch(e){}
       }
 
-      try{ var p = parseParts(f.name || ''); card.dataset.base = p.base || ''; card.dataset.season = (f.__displaySeason!=null)?String(f.__displaySeason):((p.season!=null)?String(p.season):''); card.dataset.ep = (f.__displayEp!=null)?String(f.__displayEp):((p.ep!=null)?String(p.ep):''); }catch(e){}
+      var p = parseParts(f.name || '');
+      card.dataset.base = p.base || '';
+      if(isVideo){
+        card.dataset.season = (f.__displaySeason!=null)?String(f.__displaySeason):((p.season!=null)?String(p.season):'');
+        card.dataset.ep = (f.__displayEp!=null)?String(f.__displayEp):((p.ep!=null)?String(p.ep):'');
+      } else {
+        card.dataset.season = '';
+        card.dataset.ep = '';
+      }
 
       var info = document.createElement('div'); info.className = 'info';
       var nameRow = document.createElement('div');
       var titleDiv = document.createElement('div'); titleDiv.className = 'title';
-      var p2 = parseParts(f.name || '');
+      var p2 = p;
       var display = (p2.raw || f.name || '').replace(/[_\-\s]+/g,' ').trim();
-      if(f.__displaySeason!=null || f.__displayEp!=null){
+      if(isVideo && (f.__displaySeason!=null || f.__displayEp!=null)){
         var s = f.__displaySeason != null ? f.__displaySeason : null;
         var e = f.__displayEp != null ? f.__displayEp : null;
         if(s != null && e != null) display = display + ' Saison ' + s + ' ep ' + e;
         else if(s != null) display = display + ' Saison ' + s;
         else if(e != null) display = display + ' ep ' + e;
-      } else if(p2.hasSeason || p2.hasEp || p2.season != null || p2.ep != null){
+      } else if(isVideo && (p2.hasSeason || p2.hasEp || p2.season != null || p2.ep != null)){
         var s = (p2.season != null) ? p2.season : null;
         var e = (p2.ep != null) ? p2.ep : null;
         if(s != null && e != null) display = display + ' Saison ' + s + ' ep ' + e;
@@ -286,7 +294,7 @@
       nameRow.appendChild(titleDiv);
       info.appendChild(nameRow);
 
-      if(f.__isNewestForEpisode){
+      if(f.__isNewestForEpisode && isVideo){
         var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = 'NOUVO'; badge.style.fontSize = '11px'; badge.style.marginLeft = '8px';
         nameRow.appendChild(badge);
       }
@@ -351,6 +359,7 @@
         var baseOnly = parsed.filter(function(x){ return !x.p.hasSeason && !x.p.hasEp && x.p.numericToken==null; }).map(function(x){ return x.it; });
 
         numericOnly.forEach(function(it){
+          if(!isVideoFile(it.url || it.name || '')) return;
           var p = parseParts(it.name||'');
           var ded = detectTrailingTwoNumbersFromName(p.noExt || it.name || '');
           if(ded && ded.length === 2){
@@ -373,6 +382,7 @@
         });
 
         explicitSeasonItems.forEach(function(it){
+          if(!isVideoFile(it.url || it.name || '')) return;
           var p = parseParts(it.name || '');
           if(p.season != null) it.__displaySeason = p.season;
           else if(p.hasEp && p.season==null && explicitSeasons.length===0) it.__displaySeason = 1;
@@ -392,7 +402,7 @@
           if(it.__displaySeason != null) pushToSeason(String(it.__displaySeason), it);
           else {
             var p = parseParts(it.name || '');
-            if(p.season != null) pushToSeason(String(p.season), it);
+            if(isVideoFile(it.url || it.name || '') && p.season != null) pushToSeason(String(p.season), it);
             else pushToSeason('base', it);
           }
         });
@@ -411,7 +421,7 @@
             var p = parseParts(it.name || '');
             var epKey;
             if(it.__displayEp != null) epKey = String(it.__displayEp);
-            else if(p.hasEp && p.ep != null) epKey = String(p.ep);
+            else if(isVideoFile(it.url || it.name || '') && p.hasEp && p.ep != null) epKey = String(p.ep);
             else epKey = 'base';
             epBuckets[epKey] = epBuckets[epKey] || [];
             epBuckets[epKey].push(it);
