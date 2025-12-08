@@ -2,944 +2,559 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Stream7</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#FFFFFFFF" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Stream7" />
-  <link rel="apple-touch-icon" href="https://adamdhaiti.tergenedhaiti.workers.dev/r2/adamdh7-2/uploads%2F1765001423641-aklhbbo1.jpg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;background:#f9f9fb;color:#111;margin:0}
-    header{display:flex;align-items:center;justify-content:center;padding:12px 16px;font-size:18px;font-weight:700;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:sticky;top:0;z-index:20}
-    .header-controls{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;gap:8px;align-items:center}
-    .title{display:flex;gap:12px;align-items:center}
-    .badge-new{background:#ef4444;color:#fff;padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px}
-    .show-btn{background:#111827;color:#fff;border-radius:8px;padding:6px 10px;border:none;cursor:pointer}
-    .search-bar{margin:12px;display:flex;justify-content:center}
-    input{width:90%;max-width:700px;padding:10px 14px;border-radius:12px;border:1px solid #ddd;font-size:16px;outline:none}
-    .container{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;padding:16px}
-    .card{background:#fff;border-radius:14px;box-shadow:0 3px 6px rgba(0,0,0,0.06);overflow:hidden;display:flex;flex-direction:column;transition:transform .18s}
-    .card:hover{transform:translateY(-3px)}
-    .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;background:#f1f1f1}
-    .info{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
-    .name{font-weight:600;font-size:15px;word-break:break-word;white-space:normal}
-    .suburl{font-size:11px;color:#888;word-break:anywhere}
-    .group-head{grid-column:1/-1;padding:10px;border-radius:12px;font-weight:700;color:#222;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,0.03)}
-    .group-top{font-size:16px;color:#111}
-    .group-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .season-head{grid-column:1/-1;padding:6px 12px;background:rgba(0,0,0,0.02);border-radius:10px;font-weight:700;color:#333;display:flex;justify-content:flex-start;align-items:center;gap:12px}
-    .meta{font-size:13px;color:#777}
+    :root{
+      --bg:#f9f9fb;
+      --card:#ffffff;
+      --muted:#8b94a3;
+      --accent:#0f1724;
+      --pill:#ef4444;
+      --shadow: 0 6px 18px rgba(12,20,30,0.05);
+    }
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,Segoe UI,system-ui,Arial;background:var(--bg);color:#0b1220;-webkit-font-smoothing:antialiased}
+    header{position:sticky;top:0;background:var(--card);padding:14px 18px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;z-index:40}
+    .brand{font-weight:700;font-size:18px}
+    .search-wrap{padding:14px 16px;display:flex;justify-content:center}
+    .search-input{width:100%;max-width:920px;background:#fff;border:1px solid #eef2f6;padding:12px 16px;border-radius:12px;font-size:15px;outline:none;box-shadow:0 1px 0 rgba(12,20,30,0.02)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;padding:16px;max-width:1200px;margin:0 auto}
+    .card{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 6px 18px rgba(12,20,30,0.04);display:flex;flex-direction:column;transition:transform .12s}
+    .card:hover{transform:translateY(-4px)}
+    .thumb-container{position:relative;background:#f1f3f5}
+    .thumb-container::before{content:"";display:block;padding-top:56.25%}
+    .thumb-content{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .thumb{width:100%;height:100%;object-fit:cover;display:block;border-radius:0}
+    .play-prompt{font-weight:700;font-size:16px;color:#222;padding:8px 14px;border-radius:10px;background:rgba(255,255,255,0.8)}
+    .info{padding:14px;display:flex;flex-direction:column;gap:8px}
+    .title{font-weight:600;font-size:16px;color:#0b1220}
+    .meta{color:var(--muted);font-size:13px}
     .actions{display:flex;gap:8px;flex-wrap:wrap}
-    .prefix-span{cursor:pointer;user-select:all;border-radius:6px;padding:6px 8px;background:#111827;color:#fff;font-weight:700}
-    .prefix-span:active{transform:translateY(1px)}
-    button{background:#007aff;border:none;color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
-    button:hover{background:#0065d0}
-    .small-btn{padding:6px 10px;font-size:13px;background:#111827;color:#fff;border-radius:8px;border:none}
-    .empty{text-align:center;color:#888;margin-top:40px}
-    .copy-all-btn{padding:6px 10px;font-size:13px;background:#111827;color:#fff;border-radius:8px;border:none;cursor:pointer}
-    .copy-all-btn.copied{background:#10b981}
-    .badge-new{margin-left:8px}
-    #fileList{min-height:120px}
-    html,body{touch-action:pan-y;-ms-touch-action:pan-y}
+    .btn{background:var(--accent);color:#fff;border-radius:10px;padding:7px 12px;border:none;font-size:13px;cursor:pointer}
+    .suburl{font-size:12px;color:#888;word-break:break-all;margin-top:8px}
+    .badge{background:var(--pill);color:#fff;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+    .group-head{grid-column:1/-1;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,0.03);font-weight:700;color:#111;margin-bottom:4px}
+    .season-head{grid-column:1/-1;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,0.02);font-weight:700;color:#222;margin-top:6px}
+    .empty{padding:40px;text-align:center;color:var(--muted)}
+    @media (max-width:520px){ .title{font-size:15px} .play-prompt{font-size:15px} .btn{padding:6px 10px} }
   </style>
 </head>
 <body>
-  <header>
-    <div class="title"><span>Stream7</span></div>
-    <div class="header-controls">
-      <div id="newIndicator" style="display:none" class="badge-new">Nouveaux: <span id="newCount">0</span></div>
-      <button id="showNewBtn" class="show-btn" style="display:none">Afficher</button>
-    </div>
-  </header>
-  <div class="search-bar">
-    <input id="searchInput" type="text" placeholder="Rechercher par nom, épisode, season, URL..." />
+  <header><div class="brand">Stream7</div></header>
+  <div class="search-wrap">
+    <input id="searchInput" class="search-input" placeholder="Rechercher par nom, saison, épisode, URL..." />
   </div>
-  <div id="fileList" class="container"></div>
-  <div id="emptyMessage" class="empty" style="display:none">Aucun fichier trouvé.</div>
+  <main>
+    <div id="fileList" class="grid"></div>
+    <div id="emptyMessage" class="empty" style="display:none">Aucun fichier trouvé.</div>
+  </main>
+
   <script>
-(() => {
-  const CONFIG = {
-    FILES_PATH: 'https://adamdhaiti.tergenedhaiti.workers.dev/get-all',
-    WS_PATH: (location.protocol === 'https:' ? 'wss://' : 'ws://') + 'adamdhaiti.tergenedhaiti.workers.dev/ws',
-    SSE_PATH: 'https://adamdhaiti.tergenedhaiti.workers.dev/events',
-    POLL_INTERVAL_MS: 12000,
-    BATCH_FLUSH_MS: 700,
-    CHUNK_SIZE: 50,
-    MAX_RENDER: 1200,
-    METADATA_CAP: 30000,
-    FLUSH_BATCH_ON_SCROLL: 4,
-    AUTO_FLUSH_ON_SCROLL: true,
-    SILENT_FLUSH_INTERVAL_MS: 5000,
-    MAX_VIDEOS_RENDER: 8
-  };
-
-  const toNum = v => (v === undefined || v === null) ? 0 : Number(v) || 0;
-  const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-
-  window.allFiles = [];
-  window.viewFiles = [];
-  let ws = null, es = null, pollTimer = null, reconnectAttempts = 0;
-  let pendingMsgs = [];
-  let renderedCount = 0;
-  let sentinelObserver = null;
-
-  function normalizeString(s) {
-    if (!s) return '';
-    try { s = s.normalize('NFKD').replace(/[\u0300-\u036f]/g,''); } catch(e){}
-    try { s = s.replace(/[^\p{L}\p{N}]+/gu,' '); } catch(e) { s = s.replace(/[^A-Za-z0-9]+/g,' '); }
-    return s.replace(/\s+/g,' ').trim().toLowerCase();
-  }
-
-  // Normalize key name: remove uploads/ or uploads%2F prefix so names match across buckets
-  function normalizeKeyName(key) {
-    if (!key) return '';
-    let k = String(key || '');
-    try { k = decodeURIComponent(k); } catch(e){}
-    k = k.replace(/^\/+/, '');
-    k = k.replace(/^uploads\//i, '');
-    k = k.replace(/uploads%2F/i, '');
-    return k.trim();
-  }
-
-  function parseDateLike(o) {
-    // o can be { lastModified: '...ms...' } or { uploaded: 'ISO' } or have key with digits
-    if (!o) return Date.now();
-    if (o.lastModified) {
-      const n = Number(o.lastModified);
-      if (!Number.isNaN(n) && n > 0) return n;
-    }
-    if (o.uploaded) {
-      const d = new Date(o.uploaded);
-      if (!isNaN(d.getTime())) return d.getTime();
-    }
-    if (o.uploadedAt) {
-      const n = Number(o.uploadedAt);
-      if (!Number.isNaN(n) && n > 0) return n;
-    }
-    // fallback: try to extract digits from key/name
-    const keyLike = (o.key || o.name || '');
-    const extracted = extractTimestampFromKey(keyLike);
-    if (extracted) return extracted;
-    return Date.now();
-  }
-
-  function getPathnameFromUrlOrName(uOrName) {
-    if (!uOrName) return '';
-    try {
-      const tmp = new URL(uOrName, location.origin);
-      return tmp.pathname || uOrName;
-    } catch(e){
-      return (uOrName.split('?')[0]).split('#')[0];
-    }
-  }
-
-  function isImageFile(nameOrUrl) {
-    const path = getPathnameFromUrlOrName(nameOrUrl).toLowerCase();
-    return !!path.match(/\.(jpg|jpeg|png|gif|webp|bmp|heic)(?:$)/i);
-  }
-  function isVideoFile(nameOrUrl) {
-    const path = getPathnameFromUrlOrName(nameOrUrl).toLowerCase();
-    return !!path.match(/\.(mp4|mov|webm|m4v|mkv)(?:$)/i);
-  }
-
-  function removeBracketed(s){ if(!s) return s; return s.replace(/[\{][^\}]*[\]\)\}]/g,'').replace(/\s+/g,' ').trim(); }
-
-  function parseParts(name){
-    const noExt = (name||'').replace(/\.[^.]+$/,'');
-    let rawNorm = removeBracketed(noExt).replace(/[_\-\.\s]+/g,' ').replace(/\s+/g,' ').trim();
-    let leadingNumeric = null;
-    const mLead = rawNorm.match(/^(\d{4,}|\d{6,})[-_\s]*/);
-    if(mLead){ leadingNumeric = mLead[1].replace(/[-_\s]/g,''); rawNorm = rawNorm.replace(new RegExp('^' + mLead[0].replace(/([.*+?^=!:${}()|[\]/\\])/g,'\\$1')), '').trim(); }
-    else { const m2 = rawNorm.match(/^(\d{4,})[-_\s]+/); if(m2){ leadingNumeric = m2[1]; rawNorm = rawNorm.replace(new RegExp('^' + m2[0].replace(/([.*+?^=!:${}()|[\]/\\])/g,'\\$1')), '').trim(); } }
-
-    let season = null, ep = null, hasSeason=false, hasEp=false;
-    let m;
-    m = rawNorm.match(/[sS][\s._\-:]*0*(\d{1,3})[\s._\-]*[eE][\s._\-:]*0*(\d{1,3})/);
-    if(m){ season = toNum(m[1]); ep = toNum(m[2]); hasSeason=true; hasEp=true; }
-    if(!hasSeason || !hasEp){ m = rawNorm.match(/[eE][\s._\-:]*0*(\d{1,3})[\s._\-]*[sS][\s._\-:]*0*(\d{1,3})/); if(m){ ep = toNum(m[1]); season = toNum(m[2]); hasSeason=true; hasEp=true; } }
-    if(!hasSeason || !hasEp){ m = rawNorm.match(/\b(?:season|saison)[\s._\-:]*0*(\d{1,3})[\s,._\-]*\b(?:ep(?:isode)?|e)[\s._\-:]*0*(\d{1,3})/i); if(m){ season = toNum(m[1]); ep = toNum(m[2]); hasSeason=true; hasEp=true; } }
-    if(!hasSeason){ m = rawNorm.match(/\b[sS][\s._\-:]*0*(\d{1,3})\b/); if(m){ season = toNum(m[1]); hasSeason = true; } else { m = rawNorm.match(/\b(?:season|saison)[\s._\-:]*0*(\d{1,3})\b/i); if(m){ season = toNum(m[1]); hasSeason = true; } } }
-    if(!hasEp){ m = rawNorm.match(/\b(?:ep(?:isode)?|episode|[eE])[\s._\-:]*0*(\d{1,3})\b/i); if(m){ ep = toNum(m[1] || m[0].replace(/\D/g,'')); hasEp = true; } }
-
-    let numericToken = null;
-    if(!hasSeason && !hasEp){ const nums = Array.from((rawNorm.match(/\d{1,6}/g) || []).map(x => Number(x))); if(nums.length) numericToken = nums[nums.length - 1]; }
-
-    let baseRaw = rawNorm;
-    if(hasSeason || hasEp){
-      baseRaw = baseRaw.replace(/[sS][\s._\-:]*0*(\d{1,3})[\s._\-]*[eE][\s._\-:]*0*(\d{1,3})/g,' ');
-      baseRaw = baseRaw.replace(/[eE][\s._\-:]*0*(\d{1,3})[\s._\-]*[sS][\s._\-:]*0*(\d{1,3})/g,' ');
-      baseRaw = baseRaw.replace(/\b(?:season|saison)[\s._\-:]*0*(\d{1,3})\b/ig,' ');
-      baseRaw = baseRaw.replace(/\b(?:ep(?:isode)?|episode|[eE])[\s._\-:]*0*(\d{1,3})\b/ig,' ');
-    } else if(numericToken != null){
-      baseRaw = baseRaw.replace(new RegExp('\\b0*' + String(numericToken) + '\\b','g'), ' ');
-    }
-    baseRaw = baseRaw.replace(/\b(voiranime|voir-anime|voiranime\.com|anime|stream|watch|vf|vostfr|vost|fr|sub|dub)\b/gi,' ');
-    baseRaw = baseRaw.replace(/\s+/g,' ').trim();
-    const words = baseRaw.split(/\s+/).filter(Boolean);
-    if(words.length >= 4){
-      for(let len = Math.floor(words.length/2); len >= 2; len--){
-        const first = words.slice(0,len).join(' ');
-        const second = words.slice(len, len*2).join(' ');
-        if(first === second){ baseRaw = first; break; }
-      }
-    }
-    baseRaw = baseRaw.replace(/\s+/g,' ').trim();
-    const base = normalizeString(baseRaw || rawNorm);
-    return { base, season: (season != null) ? toNum(season) : null, ep: (ep != null) ? toNum(ep) : null, numericToken: (numericToken != null) ? Number(numericToken) : null, leadingNumeric: leadingNumeric, hasSeason: !!hasSeason, hasEp: !!hasEp, raw: rawNorm };
-  }
-
-  function extractTimestampFromKey(key){
-    if(!key) return null;
-    const m = String(key).match(/(\d{10,13})/);
-    if(!m) return null;
-    const n = Number(m[1]);
-    if(!Number.isFinite(n)) return null;
-    if(n > 1e12) return n;
-    if(n > 1e9) return n * 1000;
-    return null;
-  }
-
-  function intraGroupCompare(a,b){
-    const pa = parseParts(a.name||''), pb = parseParts(b.name||'');
-    const aIsBaseOnly = (!pa.hasEp && pa.ep==null) && (!pa.hasSeason && pa.season==null);
-    const bIsBaseOnly = (!pb.hasEp && pb.ep==null) && (!pb.hasSeason && pb.season==null);
-    if(aIsBaseOnly && !bIsBaseOnly) return 1;
-    if(bIsBaseOnly && !aIsBaseOnly) return -1;
-    const sa = pa.season!=null ? toNum(pa.season) : (pa.hasEp ? 1 : 0);
-    const sb = pb.season!=null ? toNum(pb.season) : (pb.hasEp ? 1 : 0);
-    const ea = pa.ep!=null ? toNum(pa.ep) : (pa.hasSeason ? 0 : 999999);
-    const eb = pb.ep!=null ? toNum(pb.ep) : (pb.hasSeason ? 0 : 999999);
-    if(sa !== sb) return sa - sb;
-    if(ea !== eb) return ea - eb;
-    const lmA = toNum(a.lastModified), lmB = toNum(b.lastModified);
-    if(lmA !== lmB) return lmB - lmA;
-    const aNoExt = (a.name||'').replace(/\.[^.]+$/,'');
-    const bNoExt = (b.name||'').replace(/\.[^.]+$/,'');
-    return collator.compare(aNoExt,bNoExt);
-  }
-
-  function createGroupHeader(f){
-    const head = document.createElement('div'); head.className = 'group-head';
-    try { head.dataset.base = f.base || ''; } catch(e){}
-    const top = document.createElement('div'); top.className = 'group-top';
-    const pretty = (f.base || '(sans nom)').replace(/[_\-\s]+/g,' ').trim();
-    top.textContent = pretty;
-    head.appendChild(top);
-    const bottom = document.createElement('div'); bottom.className = 'group-bottom';
-    const right = document.createElement('div'); right.style.fontSize='13px'; right.style.color='#555'; right.style.whiteSpace='nowrap';
-    right.textContent = f.newest ? ('Dernier upload : ' + new Date(Number(f.newest)).toLocaleString()) : '';
-    bottom.appendChild(right);
-    if (typeof f.itemCount === 'number' && f.itemCount > 1) {
-      const copyAllBtn = document.createElement('button'); copyAllBtn.className='copy-all-btn'; copyAllBtn.title='Copier tout'; copyAllBtn.innerHTML = 'Copier tout';
-      copyAllBtn.addEventListener('click', (ev) => { ev.stopPropagation(); try{ copyGroup(f.base); } catch(e){ console.error(e); } copyAllBtn.classList.add('copied'); setTimeout(()=>copyAllBtn.classList.remove('copied'),1200); });
-      bottom.appendChild(copyAllBtn);
-    }
-    head.appendChild(bottom);
-    return head;
-  }
-
-  function createSeasonHeader(obj){
-    const head = document.createElement('div'); head.className = 'season-head';
-    try { head.dataset.season = String(obj.season); } catch(e){}
-    const left = document.createElement('div'); left.className = 'season-title';
-    left.textContent = obj.seasonLabel || (obj.season === 'base' ? 'Base' : ('Saison ' + obj.season));
-    head.appendChild(left);
-    return head;
-  }
-
-  function niceDisplayName(f){
-    const p = parseParts(f.name || '');
-    const basePretty = (p.raw || f.name || '').replace(/[_\-\s]+/g,' ').trim();
-    if(p.hasSeason || p.hasEp){
-      const s = (p.season != null) ? p.season : (p.hasEp ? 1 : null);
-      const e = (p.ep != null) ? p.ep : (p.hasEp ? (p.ep || '') : '');
-      if(s != null && e != null && e !== '') return `${basePretty} Saison ${s} ep ${e}`;
-      if(s != null && (e === '' || e == null)) return `${basePretty} Saison ${s}`;
-    }
-    if(f.__displaySeason != null){
-      return basePretty;
-    }
-    const rawName = removeBracketed((f.name || '').replace(/\.[^.]+$/,''));
-    return rawName || '(sans nom)';
-  }
-
-  function createCardElement(f, createVideo=true){
-    if(f.__groupHeader) return createGroupHeader(f);
-    if(f.__seasonHeader) return createSeasonHeader(f);
-    const card = document.createElement('div'); card.className = 'card';
-    const isVideo = isVideoFile(f.url || f.name || '');
-    const isImage = isImageFile(f.url || f.name || '');
-    let preview;
-    if(isVideo && createVideo){
-      const vid = document.createElement('video'); vid.className='thumb'; vid.src = f.url; vid.controls = true; vid.preload='metadata'; vid.setAttribute('playsinline',''); preview = vid;
-    } else if(isImage){
-      const img = document.createElement('img'); img.className='thumb'; img.alt = f.name||''; img.src = f.url; img.loading = 'lazy'; preview = img;
-    } else if(isVideo && !createVideo){
-      const div = document.createElement('div'); div.className='thumb'; div.style.display='flex'; div.style.alignItems='center'; div.style.justifyContent='center'; div.style.cursor='pointer'; div.textContent='Cliquer pour lire';
-      div.addEventListener('click', ()=>{ const vid=document.createElement('video'); vid.className='thumb'; vid.src=f.url; vid.controls=true; vid.preload='metadata'; vid.setAttribute('playsinline',''); div.replaceWith(vid); }, { once:true });
-      preview = div;
-    } else {
-      const div = document.createElement('div'); div.className='thumb'; div.style.display='flex'; div.style.alignItems='center'; div.style.justifyContent='center'; div.style.color='#999'; div.textContent='Pas d’aperçu'; preview = div;
-    }
-    try { preview.dataset.url = f.url || (f.name || ''); } catch(e){}
-    const info = document.createElement('div'); info.className='info';
-    const nameRow = document.createElement('div');
-    nameRow.style.display = 'flex';
-    nameRow.style.alignItems = 'center';
-    nameRow.style.gap = '8px';
-    nameRow.style.flexWrap = 'wrap';
-    const p = parseParts(f.name || '');
-    const prefixText = p.leadingNumeric || (() => {
-      const m = (f.name || '').match(/(^|\s)(\d{3,})/);
-      return m ? m[2] : null;
-    })();
-    const titleCombined = document.createElement('div');
-    titleCombined.style.display = 'inline';
-    titleCombined.style.whiteSpace = 'normal';
-    titleCombined.style.wordBreak = 'break-word';
-    if (prefixText) {
-      const strong = document.createElement('strong');
-      strong.textContent = prefixText + ' - ';
-      strong.style.fontWeight = '800';
-      strong.style.color = '#0f172a';
-      strong.style.cursor = 'pointer';
-      strong.title = 'Cliquer pour copier le numéro';
-      strong.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        copyText(prefixText);
-        strong.style.opacity = '0.6';
-        setTimeout(() => { strong.style.opacity = '1'; }, 700);
-      });
-      titleCombined.appendChild(strong);
-    }
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = niceDisplayName(f);
-    nameSpan.style.color = '#111';
-    nameSpan.style.fontWeight = '600';
-    titleCombined.appendChild(nameSpan);
-    nameRow.appendChild(titleCombined);
-    info.appendChild(nameRow);
-    if(f.__isNewestForEpisode){
-      const badge = document.createElement('span'); badge.className='badge-new'; badge.textContent='NOUVO'; badge.style.fontSize='11px'; badge.style.padding='4px 8px'; badge.style.marginLeft='8px';
-      nameRow.appendChild(badge);
-    }
-    const metaDiv = document.createElement('div'); metaDiv.className='meta'; const sizeMB = ((toNum(f.size)||0)/1048576).toFixed(1); const lm = f.lastModified ? new Date(Number(f.lastModified)).toLocaleString() : '-'; metaDiv.textContent = `${sizeMB} MB • ${lm}`;
-    const actions = document.createElement('div'); actions.className='actions';
-    const copyBtn = document.createElement('button'); copyBtn.className='small-btn'; copyBtn.textContent='Copier URL'; copyBtn.addEventListener('click', ()=>copyUrl(f.url));
-    const openA = document.createElement('a'); openA.href = f.url; openA.target = '_blank';
-    const openBtn = document.createElement('button'); openBtn.className='small-btn'; openBtn.textContent='Ouvrir'; openA.appendChild(openBtn);
-    const urlSpan = document.createElement('div'); urlSpan.className='suburl'; urlSpan.textContent = insertSoftBreaks(f.url || '',50);
-    actions.appendChild(copyBtn); actions.appendChild(openA);
-    info.appendChild(metaDiv); info.appendChild(actions); info.appendChild(urlSpan);
-    card.appendChild(preview); card.appendChild(info);
-    try { card.dataset.url = f.url || (f.name || ''); } catch(e){}
-    return card;
-  }
-
-  function buildOrderedList(files){
-    const groups = new Map();
-    (files||[]).forEach(f=>{
-      try {
-        const p = parseParts(f.name||'');
-        const baseKey = (p && p.base) ? p.base : normalizeString((f.name||'').replace(/\.[^.]+$/,'').replace(/\b\d+\b/g,''));
-        if(!groups.has(baseKey)) groups.set(baseKey,[]);
-        groups.get(baseKey).push(f);
-      } catch(e) {
-        const fallback = (f.name||'').replace(/\.[^.]+$/,'').replace(/\b\d+\b/g,'');
-        const fbNorm = normalizeString(fallback);
-        if(!groups.has(fbNorm)) groups.set(fbNorm,[]);
-        groups.get(fbNorm).push(f);
-      }
-    });
-
-    const groupArr = Array.from(groups.entries()).map(([base,items]) => {
-      const newest = items.reduce((m,it) => Math.max(m,toNum(it.lastModified)),0);
-      const serverIndex = items.reduce((m,it) => Math.min(m, (typeof it.__serverIndex === 'number' ? it.__serverIndex : 9999999)), 9999999);
-      return { base, items, newest, serverIndex, itemCount: items.length };
-    });
-
-    // sort groups: newest first (most recent upload on top), fallback to serverIndex then base name
-    groupArr.sort((g1,g2) => {
-      const a = toNum(g2.newest) - toNum(g1.newest);
-      if(a !== 0) return a;
-      const aHas = g1.serverIndex !== 9999999;
-      const bHas = g2.serverIndex !== 9999999;
-      if(aHas && bHas) return g1.serverIndex - g2.serverIndex;
-      return collator.compare(g1.base, g2.base);
-    });
-
-    const out = [];
-    for(const g of groupArr){
-      const parsed = g.items.map(it => ({ it, p: parseParts(it.name || '') }));
-      const explicitSeason = parsed.filter(x => x.p.hasSeason || x.p.hasEp).map(x=>x.it);
-      const numericItems = parsed.filter(x => !(x.p.hasSeason || x.p.hasEp) && x.p.numericToken != null);
-      const baseOnly = parsed.filter(x => !(x.p.hasSeason || x.p.hasEp) && x.p.numericToken == null).map(x=>x.it);
-      const numMap = new Map();
-      for(const ni of numericItems){
-        const key = String(ni.p.numericToken);
-        if(!numMap.has(key)) numMap.set(key, []);
-        numMap.get(key).push(ni);
-      }
-      const synthesized = [];
-      for(const [numKey, arr] of numMap.entries()){
-        arr.sort((a,b) => toNum(a.it.lastModified) - toNum(b.it.lastModified));
-        for (let i = 0; i < arr.length; i++) {
-          const item = arr[i].it;
-          item.__synth = { season: 1, ep: Number(numKey) };
-          synthesized.push(item);
-        }
-      }
-      out.push({ __groupHeader:true, base:g.base, newest:g.newest, itemCount: g.itemCount });
-      const seasonMap = new Map();
-      function pushToSeason(sKey, item){ const arr = seasonMap.get(sKey) || []; arr.push(item); seasonMap.set(sKey, arr); }
-      for(const it of explicitSeason){
-        const p = parseParts(it.name || '');
-        const s = (p.season != null) ? p.season : (p.hasEp ? 1 : 'base');
-        it.__displaySeason = (p.season != null) ? p.season : (p.hasEp ? 1 : null);
-        it.__displayEp = (p.ep != null) ? p.ep : (p.hasEp ? p.ep : null);
-        pushToSeason(s, it);
-      }
-      for(const it of synthesized){
-        const s = it.__synth.season != null ? it.__synth.season : 1;
-        it.__displaySeason = s;
-        it.__displayEp = it.__synth.ep;
-        pushToSeason(s, it);
-      }
-      for(const it of baseOnly) pushToSeason('base', it);
-      const seasonKeys = Array.from(seasonMap.keys()).sort((a,b) => {
-        if(a === 'base') return 1;
-        if(b === 'base') return -1;
-        return Number(a) - Number(b);
-      });
-      for(const sk of seasonKeys){
-        const items = seasonMap.get(sk) || [];
-        out.push({ __seasonHeader:true, season: sk, seasonLabel: (sk === 'base' ? 'Base' : ('Saison ' + sk)) });
-        const epBuckets = new Map();
-        for(const it of items){
-          const p = parseParts(it.name || '');
-          let epKey;
-          if(p.hasEp && p.ep != null) epKey = Number(p.ep);
-          else if(it.__displayEp != null) epKey = Number(it.__displayEp);
-          else if(p.hasSeason) epKey = 0;
-          else epKey = 'base';
-          const arr = epBuckets.get(epKey) || [];
-          arr.push(it);
-          epBuckets.set(epKey, arr);
-        }
-        const epKeys = Array.from(epBuckets.keys()).sort((a,b)=>{
-          if(a === 'base') return 1;
-          if(b === 'base') return -1;
-          if(a === 0 && b !== 0) return -1;
-          if(b === 0 && a !== 0) return 1;
-          return Number(a) - Number(b);
-        });
-        for(const ek of epKeys){
-          const arr = epBuckets.get(ek) || [];
-          arr.sort((x,y)=> toNum(y.lastModified) - toNum(x.lastModified));
-          arr.forEach((it, idx) => it.__isNewestForEpisode = (idx === 0));
-          for(const it of arr) out.push(it);
-        }
-      }
-    }
-    return out;
-  }
-
-  function copyText(text){
-    if(!text) return;
-    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(()=>{});
-    else{ const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} ta.remove(); }
-  }
-
-  function insertSoftBreaks(str,maxLen=40){
-    if(!str) return '';
-    return str.replace(/\S+/g, (chunk) => {
-      if(chunk.length <= maxLen) return chunk;
-      let out = '';
-      for(let i=0;i<chunk.length;i+=maxLen){ out += chunk.slice(i,i+maxLen); if(i+maxLen<chunk.length) out += '\u200b'; }
-      return out;
-    });
-  }
-
-  function copyGroup(baseKey){
-    if(!baseKey) return;
-    const files = (window.allFiles||[]).filter(f=>{
-      try{ return parseParts(f.name||'').base === baseKey; } catch(e){ return false; }
-    }).filter(f=>f.url);
-    if(!files.length){ copyText(`Aucun fichier trouvé pour: ${baseKey}`); return; }
-    let out = '';
-    files.forEach(f => { out += `${f.name || '(sans nom)'}\n${f.url || ''}\n\n`; });
-    copyText(out.trim());
-  }
-
-  function snapshotVideosInNodes(nodes){
-    const map = new Map();
-    try {
-      nodes.forEach(node => {
-        if(!node) return;
-        node.querySelectorAll && node.querySelectorAll('video').forEach(v => {
-          try {
-            if(!v.paused && !v.ended){
-              const src = v.currentSrc || v.src || (v.dataset && v.dataset.url) || '';
-              if(src){
-                if(v.parentElement) v.parentElement.removeChild(v);
-                map.set(src, v);
-              }
-            }
-          } catch(e){}
-        });
-      });
-    } catch(e){}
-    return map;
-  }
-
-  function restoreVideosToFragment(container, preservedMap){
-    if(!preservedMap || !preservedMap.size) return;
-    try {
-      const candidates = Array.from(container.querySelectorAll('[data-url]'));
-      for(const [src, videoEl] of preservedMap.entries()){
-        try {
-          let found = candidates.find(c => (c.dataset && c.dataset.url) === src);
-          if(found && found.parentElement){
-            videoEl.className = videoEl.className || 'thumb';
-            videoEl.controls = true;
-            videoEl.setAttribute('playsinline','');
-            found.parentElement.replaceChild(videoEl, found);
-          } else {
-          }
-        } catch(e){}
-      }
-    } catch(e){}
-  }
-
-  function replaceGroupDOM(baseKey){
-    if(!baseKey) return;
-    const listEl = document.getElementById('fileList');
-    const children = Array.from(listEl.children);
-    let startIdx = -1, endIdx = children.length;
-    for(let i=0;i<children.length;i++){
-      const ch = children[i];
-      if(ch.dataset && ch.dataset.base === baseKey){
-        startIdx = i; break;
-      }
-    }
-    if(startIdx !== -1){
-      for(let j = startIdx + 1; j < children.length; j++){
-        if(children[j].dataset && children[j].dataset.base && children[j].dataset.base !== ''){
-          endIdx = j; break;
-        }
-      }
-    }
-    const groupFiles = (window.allFiles || []).filter(f => {
-      try { return parseParts(f.name||'').base === baseKey; } catch(e){ return false; }
-    });
-    if(groupFiles.length === 0){
-      if(startIdx !== -1){
-        const nodesToRemove = children.slice(startIdx, endIdx);
-        const preserved = snapshotVideosInNodes(nodesToRemove);
-        for(let k = startIdx; k < endIdx; k++){ if(listEl.children[startIdx]) listEl.removeChild(listEl.children[startIdx]); }
-      }
-      updateEmpty();
-      return;
-    }
-    const ordered = buildOrderedList(groupFiles);
-    const frag = document.createDocumentFragment();
-    let videoCount = 0;
-    for(const item of ordered){
-      if(item.__groupHeader){ const n = createCardElement(item,false); if(n && n.dataset) n.dataset.base = item.base || ''; frag.appendChild(n); continue; }
-      if(item.__seasonHeader){ const n = createCardElement(item,false); if(n && n.dataset) n.dataset.season = String(item.season||''); frag.appendChild(n); continue; }
-      const isVideo = isVideoFile(item.url || item.name || '');
-      const createVideo = isVideo ? (videoCount < CONFIG.MAX_VIDEOS_RENDER) : false;
-      const node = createCardElement(item, createVideo);
-      frag.appendChild(node);
-      if(isVideo && createVideo) videoCount++;
-    }
-    const existingNodes = (startIdx !== -1) ? children.slice(startIdx, endIdx) : [];
-    const preserved = snapshotVideosInNodes(existingNodes);
-    const wrapper = document.createElement('div'); wrapper.appendChild(frag);
-    restoreVideosToFragment(wrapper, preserved);
-    if(startIdx !== -1){
-      for(let k = startIdx; k < endIdx; k++){ if(listEl.children[startIdx]) listEl.removeChild(listEl.children[startIdx]); }
-      const ref = listEl.children[startIdx] || null;
-      while(wrapper.firstChild) listEl.insertBefore(wrapper.firstChild, ref);
-    } else {
-      const fullOrdered = buildOrderedList(window.allFiles || []);
-      const groupOrder = fullOrdered.filter(x=>x.__groupHeader).map(g=>g.base);
-      const myIndex = groupOrder.indexOf(baseKey);
-      let inserted = false;
-      if(myIndex !== -1){
-        for(let gIdx = myIndex + 1; gIdx < groupOrder.length; gIdx++){
-          const nextBase = groupOrder[gIdx];
-          const nextNode = Array.from(listEl.children).find(c => c.dataset && c.dataset.base === nextBase);
-          if(nextNode){
-            while(wrapper.firstChild) listEl.insertBefore(wrapper.firstChild, nextNode);
-            inserted = true; break;
-          }
-        }
-      }
-      if(!inserted){
-        while(wrapper.firstChild) listEl.appendChild(wrapper.firstChild);
-      }
-    }
-    updateEmpty();
-  }
-
-  // apply incremental file (WS/SSE/add)
-  function applyIncrementalFile(file){
-    if(!file || !file.url) return;
-    // normalized name (strip uploads/ etc) used for grouping & dedupe
-    const normalizedName = normalizeKeyName(file.name || file.key || file.originalName || '');
-    const last = parseDateLike(file);
-    const nf = {
-      name: normalizedName || (file.name || file.key || ''),
-      originalName: (file.name || file.key || file.originalName || ''),
-      url: file.url,
-      size: toNum(file.size),
-      lastModified: Number(last),
-      thumbnail: file.thumbnail || null,
-      __serverIndex: (typeof file.__serverIndex === 'number' ? file.__serverIndex : undefined),
-      bucket: file.bucket || null,
-      key: file.key || null
+  (function(){
+    var CONFIG = {
+      FILES_PATH: 'https://adamdhaiti.tergenedhaiti.workers.dev/get-all',
+      POLL_INTERVAL_MS: 12000,
+      PRESERVE_PLAY_MS: 3000,
+      CHUNK_SIZE: 50,
+      MAX_RENDER: 1500,
+      METADATA_CAP: 30000,
+      MAX_VIDEOS_RENDER: 8,
+      SHOW_NO_THUMB_TEXT: 'Cliquez pour jouer'
     };
 
-    // remove duplicates:
-    // - same url
-    // - same normalized name (so uploads/... and ... are treated the same)
-    // - same original key (if any)
-    window.allFiles = (window.allFiles || []).filter(x => {
-      if(!x) return false;
-      if(x.url === nf.url) return false; // remove old same url
-      // compute normalized existing name
-      const existingNorm = normalizeKeyName(x.originalName || x.name || '');
-      if (existingNorm && normalizedName && existingNorm === normalizedName) return false; // remove older with same normalized name
-      if (x.key && nf.key && x.key === nf.key) return false;
-      return true;
-    });
+    function toNum(v){ return (v===undefined||v===null)?0:Number(v)||0; }
+    function normalizeString(s){ if(!s) return ''; try{ s = s.normalize('NFKD').replace(/[\u0300-\u036f]/g,''); }catch(e){} try{ s = s.replace(/[^\p{L}\p{N}]+/gu,' '); }catch(e){ s = s.replace(/[^A-Za-z0-9]+/g,' '); } return s.replace(/\s+/g,' ').trim().toLowerCase(); }
+    function normalizeKeyName(k){ if(!k) return ''; var s = String(k||''); try{ s = decodeURIComponent(s); }catch(e){} s = s.replace(/^\/+/, ''); s = s.replace(/^uploads\//i, ''); s = s.replace(/uploads%2F/i, ''); return s.trim(); }
+    function getPathname(u){ if(!u) return ''; try { var tmp = new URL(u, location.origin); return tmp.pathname || u; } catch(e) { return (u+'').split('?')[0].split('#')[0]; } }
+    function isImageFile(nameOrUrl){ var p = getPathname(nameOrUrl).toLowerCase(); return !!p.match(/\.(jpg|jpeg|png|gif|webp|bmp|heic)$/i); }
+    function isVideoFile(nameOrUrl){ var p = getPathname(nameOrUrl).toLowerCase(); return !!p.match(/\.(mp4|mov|webm|m4v|mkv)$/i); }
+    function removeBrackets(s){ if(!s) return s; return s.replace(/[\{\}]/g,' ').replace(/\s+/g,' ').trim(); }
 
-    // push new file and re-sort by lastModified desc
-    window.allFiles.push(nf);
-    window.allFiles.sort((a,b) => Number(b.lastModified || 0) - Number(a.lastModified || 0));
-    // cap
-    if(window.allFiles.length > CONFIG.METADATA_CAP) window.allFiles = window.allFiles.slice(0, CONFIG.METADATA_CAP);
+    function detectTrailingTwoNumbersFromName(noExt){
+      if(!noExt) return null;
+      var s = (noExt+'').replace(/[_\.\u2013\u2014\-]+/g,' ').replace(/\s+/g,' ').trim();
+      var parts = s.split(/\s+/).filter(Boolean);
+      if(parts.length === 0) return null;
+      var noiseRe = /^(ep|episode|e|s|season|saison|vf|vostfr|vost|sub|dub|x264|x265|h264|hevc|hdrip|bdrip|webrip|web|bluray|bd|dvdrip|px|eng|fr|jp|720p|1080p|2160p|4k|8k)$/i;
 
-    // replace group DOM for this base
-    const baseKey = (() => { try { return parseParts(nf.name||'').base; } catch(e) { return normalizeString((nf.name||'').replace(/\.[^.]+$/,'').replace(/\b\d+\b/g,'')); } })();
-    replaceGroupDOM(baseKey);
-  }
+      var lastAlpha = -1;
+      for(var i=0;i<parts.length;i++){
+        if(/\p{L}/u.test(parts[i])) lastAlpha = i;
+      }
 
-  function handleServerMsg(msg){
-    if(!msg || !msg.type) return;
-    // msg.file expected shape from worker: { name, key, url, size, uploaded, lastModified, bucket }
-    if(msg.type === 'full' && Array.isArray(msg.files)){
-      // normalize all, ensure name normalized to strip uploads/
-      const arr = msg.files.map((f, idx) => {
-        const nName = normalizeKeyName(f.name || f.key || '');
-        const last = parseDateLike(f);
-        return { name: nName, originalName: (f.name||f.key||''), url: f.url, size: toNum(f.size), lastModified: Number(last), thumbnail: f.thumbnail || null, __serverIndex: idx, bucket: f.bucket || null, key: f.key || null };
-      });
-      // dedupe by normalized name first then url
-      const byName = new Map();
-      for(const it of arr){
-        const k = normalizeKeyName(it.originalName || it.name || '');
-        if(!byName.has(k) || (byName.get(k).lastModified < it.lastModified)){
-          byName.set(k, it);
+      function extractNumsFromTok(tok, out){
+        if(/^\d{5,}$/.test(tok)) return; // skip long pure numbers (timestamps)
+        var m = tok.match(/\d{1,3}/g);
+        if(!m) return;
+        for(var j=0;j<m.length && out.length<2;j++){
+          var v = Number(m[j]);
+          if(!isFinite(v)) continue;
+          if(v >= 1000) continue;
+          out.push(v);
         }
       }
-      const unique = Array.from(byName.values());
-      unique.sort((a,b) => Number(b.lastModified || 0) - Number(a.lastModified || 0));
-      window.allFiles = unique.slice(0, CONFIG.METADATA_CAP);
-      fullRerender(); return;
-    }
-    if((msg.type === 'add' || msg.type === 'update') && msg.file){
-      applyIncrementalFile(msg.file);
-      return;
-    }
-    if(msg.type === 'remove'){
-      const ident = msg.url || msg.name || msg.key;
-      window.allFiles = (window.allFiles||[]).filter(x => x.url !== ident && x.key !== ident && normalizeKeyName(x.originalName || x.name || '') !== normalizeKeyName(msg.name || msg.key || ''));
-      try {
-        const listEl = document.getElementById('fileList');
-        const node = Array.from(listEl.querySelectorAll('[data-url]')).find(n => n.dataset && (n.dataset.url === ident || n.dataset.url === msg.url));
-        if(node && node.parentElement) node.parentElement.remove();
-      } catch(e){}
-      updateEmpty();
-      return;
-    }
-    if(msg.type === 'notify' && Array.isArray(msg.files)){
-      for(const f of msg.files){
-        if(!f) continue;
-        applyIncrementalFile(f);
+
+      if(lastAlpha >= 0){
+        var candidates = parts.slice(lastAlpha + 1);
+        var found = [];
+        for(var k=0;k<candidates.length && found.length<2;k++){
+          var tok = candidates[k];
+          if(!tok) continue;
+          if(noiseRe.test(tok)) continue;
+          if(/^\d{1,4}$/.test(tok)){
+            var val = Number(tok);
+            if(val < 1000) found.push(val);
+            continue;
+          }
+          extractNumsFromTok(tok, found);
+        }
+        if(found.length >= 2) return [found[0], found[1]];
       }
-      return;
+
+      var found2 = [];
+      for(var ii = parts.length - 1; ii >= 0 && found2.length < 2; ii--){
+        var t = parts[ii];
+        if(!t) continue;
+        if(noiseRe.test(t)) continue;
+        if(/^\d{5,}$/.test(t)) continue;
+        if(/^\d{1,4}$/.test(t)){
+          var vv = Number(t);
+          if(vv < 1000) found2.push(vv);
+          continue;
+        }
+        var mm = t.match(/\d{1,3}/g) || [];
+        for(var zi = mm.length - 1; zi >= 0 && found2.length < 2; zi--){
+          var vv2 = Number(mm[zi]);
+          if(!isFinite(vv2) || vv2 >= 1000) continue;
+          found2.push(vv2);
+        }
+      }
+      if(found2.length >= 2){
+        found2.reverse();
+        return [found2[0], found2[1]];
+      }
+
+      return null;
     }
-  }
 
-  function bufferAndFlush(msg){ pendingMsgs.push(msg); }
-  setInterval(()=> {
-    if(!pendingMsgs.length) return;
-    const batch = pendingMsgs.splice(0,pendingMsgs.length);
-    for(const m of batch) try{ handleServerMsg(m); } catch(e){ console.error(e); }
-  }, CONFIG.BATCH_FLUSH_MS);
+    function parseParts(name){
+      var original = String(name || '');
+      var noExt = original.replace(/\.[^.]+$/,'');
+      var rawCandidate = removeBrackets(noExt).replace(/[_\.\u2013\u2014]+/g,' ').trim();
+      var raw = rawCandidate.replace(/[-\s]+/g,' ').trim();
+      raw = raw.replace(/\b(voiranime|anime|stream|watch|vf|vostfr|vost|fr|sub|dub|x264|x265|720p|1080p|480p|2160p|webrip|bluray)\b/gi,' ').replace(/\s+/g,' ').trim();
 
-  function snapshotPlayingVideos(){
-    const map = new Map();
-    try {
-      document.querySelectorAll('#fileList video').forEach(v => {
+      var season = null, ep = null, hasSeason=false, hasEp=false, numericToken = null;
+
+      var m;
+      m = raw.match(/(?:\b|^)(?:s|season|saison)\s*0*(\d{1,3})\s*[-_.\s]*[eexX]\s*0*(\d{1,3})(?:\b|$)/i);
+      if(m){ season = toNum(m[1]); ep = toNum(m[2]); hasSeason = true; hasEp = true; raw = raw.replace(m[0],' '); }
+      if(!hasSeason || !hasEp){
+        m = raw.match(/(\d{1,2})[xX]0*(\d{1,3})/);
+        if(m){ season = toNum(m[1]); ep = toNum(m[2]); hasSeason = true; hasEp = true; raw = raw.replace(m[0],' '); }
+      }
+      if(!hasSeason || !hasEp){
+        m = raw.match(/(?:season|saison)\s*0*(\d{1,3})\s*(?:ep|episode|e)\s*0*(\d{1,3})/i);
+        if(m){ season = toNum(m[1]); ep = toNum(m[2]); hasSeason = true; hasEp = true; raw = raw.replace(m[0],' '); }
+      }
+      if(!hasEp){
+        m = raw.match(/\b(?:ep|episode|e)\.?\s*0*(\d{1,4})\b/i);
+        if(m){ ep = toNum(m[1]); hasEp = true; raw = raw.replace(m[0],' '); }
+      }
+      if(!hasSeason){
+        m = raw.match(/\b(?:s|season|saison)\.?\s*0*(\d{1,3})\b/i);
+        if(m){ season = toNum(m[1]); hasSeason = true; raw = raw.replace(m[0],' '); }
+      }
+
+      if(!hasSeason || !hasEp){
+        try{
+          var ded = detectTrailingTwoNumbersFromName(noExt);
+          if(ded && ded.length === 2){
+            season = toNum(ded[0]); ep = toNum(ded[1]); hasSeason = true; hasEp = true;
+          }
+        }catch(e){}
+      }
+
+      raw = raw.replace(/\b\d{8,13}\b/g,' ');
+      raw = raw.replace(/\b(?:ep|episode|e|s|season|saison|vostfr|vf|sub|dub)\b/gi,' ');
+      raw = raw.replace(/\b\d{1,4}\b/g,' ');
+      raw = raw.replace(/\s+/g,' ').trim();
+
+      var base = normalizeString(raw || noExt);
+      if(!base) base = normalizeString(noExt.replace(/\b\d{1,4}\b/g,' ').replace(/[_\-\.\u2013\u2014]+/g,' ').trim());
+
+      var numericTokenMatch = noExt.match(/(\d{1,4})(?!.*\d{1,4})/);
+      if(numericTokenMatch) numericToken = Number(numericTokenMatch[1]);
+
+      return {
+        base: base,
+        season: (season != null) ? toNum(season) : null,
+        ep: (ep != null) ? toNum(ep) : null,
+        numericToken: numericToken != null ? toNum(numericToken) : null,
+        hasSeason: !!hasSeason,
+        hasEp: !!hasEp,
+        raw: raw,
+        noExt: noExt
+      };
+    }
+
+    function tokenJaccard(a,b){ if(!a||!b) return 0; var ta=a.split(/\s+/).filter(Boolean), tb=b.split(/\s+/).filter(Boolean), sa={}, sb={}; ta.forEach(function(t){ if(t.length>1) sa[t]=1 }); tb.forEach(function(t){ if(t.length>1) sb[t]=1 }); var inter=0; for(var k in sa) if(sb[k]) inter++; var union = Object.keys(sa).length + Object.keys(sb).length - inter; if(union===0) return 0; return inter/union; }
+    function basesSimilar(a,b){ if(!a||!b) return false; if(a===b) return true; if(a.indexOf(b)!==-1||b.indexOf(a)!==-1) return true; var firstA=a.split(' ')[0], firstB=b.split(' ')[0]; if(firstA && firstB && firstA===firstB) return true; return tokenJaccard(a,b) >= 0.3; }
+    function insertSoftBreaks(str,maxLen){ if(!str) return ''; maxLen = maxLen || 40; return str.replace(/\S+/g,function(chunk){ if(chunk.length <= maxLen) return chunk; var out=''; for(var i=0;i<chunk.length;i+=maxLen){ out += chunk.slice(i, i+maxLen); if(i+maxLen<chunk.length) out += '\u200b'; } return out; }); }
+    function copyUrl(url){ if(!url) return; if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(function(){}); else { var ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} ta.remove(); } }
+
+    var playingMap = new Map();
+    function attachPlaybackTracking(vidEl, url){
+      function markPlaying(){ playingMap.set(url, { el: vidEl, lastPlayTs: Date.now(), position: vidEl.currentTime || 0 }); }
+      function markPaused(){ var entry = playingMap.get(url) || {}; entry.position = vidEl.currentTime || 0; entry.lastPlayTs = Date.now(); playingMap.set(url, entry); }
+      vidEl.addEventListener('play', markPlaying); vidEl.addEventListener('playing', markPlaying); vidEl.addEventListener('pause', markPaused); vidEl.addEventListener('ended', markPaused);
+    }
+
+    function createNoThumbPlaceholder(url){
+      var wrapper = document.createElement('div'); wrapper.className = 'thumb-container';
+      try{ wrapper.dataset.url = url || ''; } catch(e){}
+      var content = document.createElement('div'); content.className = 'thumb-content';
+      var prompt = document.createElement('div'); prompt.className = 'play-prompt'; prompt.textContent = CONFIG.SHOW_NO_THUMB_TEXT;
+      content.appendChild(prompt); wrapper.appendChild(content);
+      function onClick(){
+        if(!url) return;
+        var existing = content.querySelector('video');
+        if(existing){ if(existing.paused) existing.play().catch(function(){}); else existing.pause(); return; }
+        var vid = document.createElement('video');
+        vid.className = 'thumb'; vid.src = url; vid.controls = true; vid.preload = 'metadata'; vid.setAttribute('playsinline','');
+        vid.style.width = '100%'; vid.style.height = '100%'; vid.style.objectFit = 'cover';
+        attachPlaybackTracking(vid, url);
+        content.innerHTML = ''; content.appendChild(vid);
+        var p = vid.play(); if(p && p.catch) p.catch(function(){});
+      }
+      wrapper.addEventListener('click', onClick);
+      wrapper.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } });
+      return wrapper;
+    }
+
+    function createCardElement(f){
+      if(f.__groupHeader){
+        var head = document.createElement('div'); head.className = 'group-head'; head.textContent = (f.base || '(sans nom)').replace(/[_\-\s]+/g,' ').trim(); return head;
+      }
+      if(f.__seasonHeader){
+        var s = document.createElement('div'); s.className = 'season-head'; s.textContent = f.seasonLabel || (f.season === 'base' ? 'Base' : ('Saison ' + f.season)); return s;
+      }
+
+      var card = document.createElement('div'); card.className = 'card';
+      var isVideo = isVideoFile(f.url || f.name || '');
+      var preview;
+      if(isVideo){
+        preview = createNoThumbPlaceholder(f.url);
+        try{ preview.dataset.url = f.url || ''; }catch(e){}
+      } else if(isImageFile(f.url || f.name || '')){
+        preview = document.createElement('div'); preview.className = 'thumb-container';
+        var content = document.createElement('div'); content.className = 'thumb-content';
+        var img = document.createElement('img'); img.className = 'thumb'; img.alt = f.name || ''; img.src = f.url; img.loading = 'lazy';
+        content.appendChild(img); preview.appendChild(content);
+        try{ preview.dataset.url = f.url || ''; }catch(e){}
+      } else {
+        preview = document.createElement('div'); preview.className = 'thumb-container';
+        var content2 = document.createElement('div'); content2.className = 'thumb-content';
+        var txt = document.createElement('div'); txt.textContent = 'Pas d’aperçu';
+        content2.appendChild(txt); preview.appendChild(content2);
+        try{ preview.dataset.url = f.url || ''; }catch(e){}
+      }
+
+      try{ var p = parseParts(f.name || ''); card.dataset.base = p.base || ''; card.dataset.season = (f.__displaySeason!=null)?String(f.__displaySeason):((p.season!=null)?String(p.season):''); card.dataset.ep = (f.__displayEp!=null)?String(f.__displayEp):((p.ep!=null)?String(p.ep):''); }catch(e){}
+
+      var info = document.createElement('div'); info.className = 'info';
+      var nameRow = document.createElement('div');
+      var titleDiv = document.createElement('div'); titleDiv.className = 'title';
+      var p2 = parseParts(f.name || '');
+      var display = (p2.raw || f.name || '').replace(/[_\-\s]+/g,' ').trim();
+      if(f.__displaySeason!=null || f.__displayEp!=null){
+        var s = f.__displaySeason != null ? f.__displaySeason : null;
+        var e = f.__displayEp != null ? f.__displayEp : null;
+        if(s != null && e != null) display = display + ' Saison ' + s + ' ep ' + e;
+        else if(s != null) display = display + ' Saison ' + s;
+        else if(e != null) display = display + ' ep ' + e;
+      } else if(p2.hasSeason || p2.hasEp || p2.season != null || p2.ep != null){
+        var s = (p2.season != null) ? p2.season : null;
+        var e = (p2.ep != null) ? p2.ep : null;
+        if(s != null && e != null) display = display + ' Saison ' + s + ' ep ' + e;
+        else if(s != null) display = display + ' Saison ' + s;
+        else if(e != null) display = display + ' ep ' + e;
+      }
+      titleDiv.textContent = display || '(sans nom)';
+      nameRow.appendChild(titleDiv);
+      info.appendChild(nameRow);
+
+      if(f.__isNewestForEpisode){
+        var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = 'NOUVO'; badge.style.fontSize = '11px'; badge.style.marginLeft = '8px';
+        nameRow.appendChild(badge);
+      }
+
+      var metaDiv = document.createElement('div'); metaDiv.className = 'meta'; metaDiv.textContent = ((toNum(f.size)||0)/1048576).toFixed(1) + ' MB';
+      var actions = document.createElement('div'); actions.className = 'actions';
+      var copyBtn = document.createElement('button'); copyBtn.className = 'btn'; copyBtn.textContent = 'Copier URL'; copyBtn.addEventListener('click', function(){ copyUrl(f.url); });
+      var openA = document.createElement('a'); openA.href = f.url || '#'; openA.target = '_blank';
+      var openBtn = document.createElement('button'); openBtn.className = 'btn'; openBtn.textContent = 'Ouvrir'; openA.appendChild(openBtn);
+      var urlSpan = document.createElement('div'); urlSpan.className = 'suburl'; urlSpan.textContent = insertSoftBreaks(f.url || '', 50);
+      actions.appendChild(copyBtn); actions.appendChild(openA);
+      info.appendChild(metaDiv); info.appendChild(actions); info.appendChild(urlSpan);
+
+      card.appendChild(preview); card.appendChild(info);
+      return card;
+    }
+
+    function buildOrderedList(files){
+      var groups = [];
+      (files||[]).forEach(function(f){
         try {
-          if(!v.paused && !v.ended){
-            const src = v.currentSrc || v.src || (v.dataset && v.dataset.url) || '';
-            if(src){
+          var p = parseParts(f.name||'');
+          var baseKey = p.base || normalizeString((f.name||'').replace(/\.[^.]+$/,'').replace(/\b\d+\b/g,''));
+          var placed = false;
+          for(var i=0;i<groups.length;i++){
+            if(basesSimilar(baseKey, groups[i].base)){
+              groups[i].items.push(f); placed = true; break;
+            }
+          }
+          if(!placed) groups.push({ base: baseKey, items: [f] });
+        } catch(e){
+          var fb = normalizeString((f.name||'').replace(/\.[^.]+$/,'').replace(/\b\d+\b/g,''));
+          var placed2 = false;
+          for(var j=0;j<groups.length;j++){
+            if(basesSimilar(fb, groups[j].base)){
+              groups[j].items.push(f); placed2 = true; break;
+            }
+          }
+          if(!placed2) groups.push({ base: fb, items: [f] });
+        }
+      });
+
+      var groupArr = groups.map(function(g){
+        var newest = g.items.reduce(function(m,it){ return Math.max(m, toNum(it.lastModified)); }, 0);
+        return { base: g.base, items: g.items, newest: newest, itemCount: g.items.length };
+      });
+
+      groupArr.sort(function(a,b){ return Number(b.newest||0) - Number(a.newest||0); });
+
+      var out = [];
+      groupArr.forEach(function(g){
+        var parsed = g.items.map(function(it){ return { it: it, p: parseParts(it.name||'') }; });
+
+        var explicitSeasons = parsed.filter(function(x){ return x.p.hasSeason && x.p.season!=null; }).map(function(x){ return x.p.season; });
+        var explicitSet = {};
+        explicitSeasons.forEach(function(s){ explicitSet[s] = true; });
+        var maxExplicit = explicitSeasons.length ? Math.max.apply(null, explicitSeasons) : 0;
+        var synthSeasonForGroup = (maxExplicit > 0) ? (maxExplicit + 1) : 1;
+
+        var explicitSeasonItems = parsed.filter(function(x){ return x.p.hasSeason || x.p.hasEp; }).map(function(x){ return x.it; });
+        var numericOnly = parsed.filter(function(x){ return !x.p.hasSeason && !x.p.hasEp && x.p.numericToken!=null; }).map(function(x){ return x.it; });
+        var baseOnly = parsed.filter(function(x){ return !x.p.hasSeason && !x.p.hasEp && x.p.numericToken==null; }).map(function(x){ return x.it; });
+
+        numericOnly.forEach(function(it){
+          var p = parseParts(it.name||'');
+          var ded = detectTrailingTwoNumbersFromName(p.noExt || it.name || '');
+          if(ded && ded.length === 2){
+            it.__displaySeason = ded[0];
+            it.__displayEp = ded[1];
+            return;
+          }
+          if(p.numericToken != null){
+            if(Object.keys(explicitSet).length > 0){
+              if(explicitSet[1]) it.__displaySeason = 1;
+              else it.__displaySeason = maxExplicit;
+              it.__displayEp = p.numericToken;
+              return;
+            } else {
+              it.__displaySeason = synthSeasonForGroup;
+              it.__displayEp = p.numericToken;
+              return;
+            }
+          }
+        });
+
+        explicitSeasonItems.forEach(function(it){
+          var p = parseParts(it.name || '');
+          if(p.season != null) it.__displaySeason = p.season;
+          else if(p.hasEp && p.season==null && explicitSeasons.length===0) it.__displaySeason = 1;
+          else if(p.hasEp && p.season==null && explicitSeasons.length>0) it.__displaySeason = synthSeasonForGroup;
+          it.__displayEp = (p.ep != null) ? p.ep : (p.numericToken != null ? p.numericToken : null);
+        });
+
+        baseOnly.forEach(function(it){ });
+
+        out.push({ __groupHeader: true, base: g.base, newest: g.newest, itemCount: g.itemCount });
+
+        var seasonMap = {};
+        function pushToSeason(sKey, item){ seasonMap[sKey] = seasonMap[sKey] || []; seasonMap[sKey].push(item); }
+
+        parsed.forEach(function(entry){
+          var it = entry.it;
+          if(it.__displaySeason != null) pushToSeason(String(it.__displaySeason), it);
+          else {
+            var p = parseParts(it.name || '');
+            if(p.season != null) pushToSeason(String(p.season), it);
+            else pushToSeason('base', it);
+          }
+        });
+
+        var seasonKeys = Object.keys(seasonMap).sort(function(a,b){
+          if(a === 'base') return 1;
+          if(b === 'base') return -1;
+          return Number(a) - Number(b);
+        });
+
+        seasonKeys.forEach(function(sk){
+          out.push({ __seasonHeader: true, season: sk, seasonLabel: (sk === 'base' ? 'Base' : ('Saison ' + sk)) });
+          var items = seasonMap[sk] || [];
+          var epBuckets = {};
+          items.forEach(function(it){
+            var p = parseParts(it.name || '');
+            var epKey;
+            if(it.__displayEp != null) epKey = String(it.__displayEp);
+            else if(p.hasEp && p.ep != null) epKey = String(p.ep);
+            else epKey = 'base';
+            epBuckets[epKey] = epBuckets[epKey] || [];
+            epBuckets[epKey].push(it);
+          });
+          var epKeys = Object.keys(epBuckets).sort(function(a,b){
+            if(a === 'base') return 1;
+            if(b === 'base') return -1;
+            return Number(a) - Number(b);
+          });
+          epKeys.forEach(function(ek){
+            var arr = epBuckets[ek] || [];
+            arr.sort(function(x,y){ return toNum(y.lastModified) - toNum(x.lastModified); });
+            arr.forEach(function(it, idx){ it.__isNewestForEpisode = (idx === 0); out.push(it); });
+          });
+        });
+      });
+
+      return out;
+    }
+
+    function snapshotPlayingVideos(){
+      var map = new Map();
+      try{
+        document.querySelectorAll('#fileList video').forEach(function(v){
+          try{
+            var src = v.currentSrc || v.src || (v.dataset && v.dataset.url) || '';
+            if(!src) return;
+            var paused = v.paused || v.ended;
+            var now = Date.now();
+            var entry = playingMap.get(src) || {};
+            var last = entry.lastPlayTs || 0;
+            if((!paused) || (now - last <= CONFIG.PRESERVE_PLAY_MS)){
               if(v.parentElement) v.parentElement.removeChild(v);
-              map.set(src, v);
+              map.set(src, { el: v, pos: v.currentTime || (entry.position || 0), lastPlayTs: now });
             }
-          }
-        } catch(e){}
-      });
-    } catch(e){}
-    return map;
-  }
-  function restorePlayingVideos(map){
-    if(!map || !map.size) return;
-    const listEl = document.getElementById('fileList');
-    const previews = Array.from(listEl.querySelectorAll('[data-url]'));
-    for(const [src, videoEl] of map.entries()){
-      try {
-        let found = null;
-        for(const p of previews){ if((p.dataset && p.dataset.url) === src){ found = p; break; } }
-        if(found && found.parentElement){
-          videoEl.className = videoEl.className || 'thumb';
-          videoEl.controls = true;
-          videoEl.setAttribute('playsinline','');
-          found.parentElement.replaceChild(videoEl, found);
-        }
-      } catch(e){}
+          }catch(e){}
+        });
+      }catch(e){}
+      return map;
     }
-  }
 
-  function fullRerender(){
-    const preserved = snapshotPlayingVideos();
-    renderedCount = 0;
-    document.getElementById('fileList').innerHTML = '';
-    renderNextChunk();
-    restorePlayingVideos(preserved);
-  }
-
-  function renderNextChunk(){
-    const listEl = document.getElementById('fileList');
-    const source = (window.viewFiles && window.viewFiles.length) ? window.viewFiles : buildOrderedList(window.allFiles||[]);
-    if(renderedCount >= source.length) return;
-    const frag = document.createDocumentFragment();
-    const limit = Math.min(source.length, Math.min(CONFIG.MAX_RENDER, renderedCount + CONFIG.CHUNK_SIZE));
-    let videoCount = 0;
-    for(let i = renderedCount; i < limit; i++){
-      const f = source[i];
-      if(f.__groupHeader){ frag.appendChild(createCardElement(f,false)); continue; }
-      const isVideo = isVideoFile(f.url || f.name || '');
-      const createVideo = isVideo ? (videoCount < CONFIG.MAX_VIDEOS_RENDER) : false;
-      const card = createCardElement(f, createVideo);
-      if(isVideo && createVideo) videoCount++;
-      frag.appendChild(card);
-    }
-    renderedCount = limit;
-    listEl.appendChild(frag);
-    updateEmpty(); updateSentinel();
-  }
-
-  function updateSentinel(){
-    const listEl = document.getElementById('fileList');
-    let sentinel = document.getElementById('render-sentinel');
-    if(!sentinel){
-      sentinel = document.createElement('div'); sentinel.id='render-sentinel'; sentinel.style.width='1px'; sentinel.style.height='1px'; sentinel.style.opacity='0';
-      listEl.appendChild(sentinel); ensureSentinelObserver(); sentinelObserver.observe(sentinel);
-    } else listEl.appendChild(sentinel);
-  }
-
-  function ensureSentinelObserver(){
-    if(sentinelObserver) return;
-    sentinelObserver = new IntersectionObserver(entries => { entries.forEach(e => { if(e.isIntersecting) { renderNextChunk(); } }); }, { root:null, rootMargin:'600px', threshold:0.01 });
-  }
-
-  function updateEmpty(){
-    const empty = document.getElementById('emptyMessage');
-    const len = (window.viewFiles && window.viewFiles.length) ? window.viewFiles.filter(x=>!x.__groupHeader).length : buildOrderedList(window.allFiles||[]).filter(x=>!x.__groupHeader).length;
-    empty.style.display = (len === 0) ? 'block' : 'none';
-  }
-
-  function applySearchAndRender(){
-    const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
-    const ordered = buildOrderedList(window.allFiles || []);
-    if(q){
-      window.viewFiles = ordered.filter(f => {
-        if(f.__groupHeader) return (f.base||'').toLowerCase().includes(q);
-        return ((f.name||'').toLowerCase().includes(q) || (f.url||'').toLowerCase().includes(q) || (parseParts(f.name||'').base||'').toLowerCase().includes(q));
+    function restorePlayingVideos(map){
+      if(!map || !map.size) return;
+      var listEl = document.getElementById('fileList');
+      map.forEach(function(data, src){
+        try{
+          var found = Array.from(listEl.querySelectorAll('[data-url]')).find(function(n){ return n.dataset && (n.dataset.url === src || n.dataset.url === decodeURIComponent(src)); });
+          if(found && found.parentElement){
+            var content = found.querySelector('.thumb-content');
+            if(content){
+              var videoEl = data.el;
+              videoEl.className = videoEl.className || 'thumb';
+              videoEl.controls = true;
+              videoEl.setAttribute('playsinline','');
+              try{ videoEl.currentTime = data.pos || 0; }catch(e){}
+              content.innerHTML = '';
+              content.appendChild(videoEl);
+              try{ var p = videoEl.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+              return;
+            }
+          }
+          var fallbackCard = document.createElement('div'); fallbackCard.className = 'card';
+          var info = document.createElement('div'); info.className = 'info'; info.textContent = 'Vidéo (restaurée) — ' + (src||'');
+          var v = data.el; v.className = 'thumb'; v.controls = true; v.setAttribute('playsinline','');
+          try{ v.currentTime = data.pos || 0; }catch(e){}
+          fallbackCard.appendChild(v); fallbackCard.appendChild(info);
+          listEl.insertBefore(fallbackCard, listEl.firstChild);
+        }catch(e){}
       });
-    } else window.viewFiles = [];
-    renderedCount = 0; document.getElementById('fileList').innerHTML = ''; renderNextChunk();
-  }
-  function debounce(fn,ms=150){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
-  document.getElementById('searchInput').addEventListener('input', debounce(applySearchAndRender,140));
+    }
 
-  // loadFiles (initial + polling)
-  async function loadFiles(){
-    try{
-      const res = await fetch(CONFIG.FILES_PATH, { cache:'no-store' });
-      if(!res.ok) throw new Error('fetch failed');
-      const data = await res.json();
-      let files = [];
-      if (data && data.ok && Array.isArray(data.result)) {
-        for (const bucket of data.result) {
-          if (bucket && Array.isArray(bucket.objects)) {
-            for (const o of bucket.objects) {
-              const key = o.key || o.name || '';
-              const keyNorm = normalizeKeyName(key);
-              const last = parseDateLike(o);
-              files.push({
-                name: keyNorm,
-                originalName: key,
-                url: o.url || '',
-                size: Number(o.size) || 0,
-                lastModified: Number(last),
-                bucket: bucket.bucket || null,
-                key: o.key || null
-              });
-            }
-          }
-        }
-      } else if (Array.isArray(data)) {
-        for (const f of data) {
-          const key = f.key || f.name || '';
-          const keyNorm = normalizeKeyName(key);
-          const last = parseDateLike(f);
-          files.push({
-            name: keyNorm,
-            originalName: key,
-            url: f.url || '',
-            size: Number(f.size) || 0,
-            lastModified: Number(last),
-            bucket: f.bucket || null,
-            key: f.key || null
-          });
-        }
-      } else if (data && Array.isArray(data.objects)) {
-        for (const o of data.objects) {
-          const key = o.key || o.name || '';
-          const keyNorm = normalizeKeyName(key);
-          const last = parseDateLike(o);
-          files.push({
-            name: keyNorm,
-            originalName: key,
-            url: o.url || '',
-            size: Number(o.size) || 0,
-            lastModified: Number(last),
-            bucket: data.bucket || null,
-            key: o.key || null
-          });
-        }
+    function renderChunked(files){
+      var listEl = document.getElementById('fileList');
+      var preserved = snapshotPlayingVideos();
+      listEl.innerHTML = '';
+      var source = buildOrderedList(files || []);
+      var frag = document.createDocumentFragment();
+      for(var i=0;i<source.length;i++){
+        var item = source[i];
+        if(item.__groupHeader || item.__seasonHeader){ frag.appendChild(createCardElement(item)); continue; }
+        var node = createCardElement(item);
+        frag.appendChild(node);
       }
-      // dedupe by normalized name (prefer newest)
-      const byName = new Map();
-      for(const it of files){
-        if(!it.url) continue;
-        const n = normalizeKeyName(it.originalName || it.name || '');
-        if(!byName.has(n) || (byName.get(n).lastModified < it.lastModified)) byName.set(n, it);
-      }
-      const unique = Array.from(byName.values());
-      unique.sort((a,b) => Number(b.lastModified || 0) - Number(a.lastModified || 0));
-      window.allFiles = unique.slice(0, CONFIG.METADATA_CAP);
-      fullRerender();
-    }catch(e){ console.error(e); }
-  }
+      listEl.appendChild(frag);
+      restorePlayingVideos(preserved);
+      updateEmpty();
+      ensureSentinel();
+    }
 
-  function connectWebSocket(){
-    try{ ws = new WebSocket(CONFIG.WS_PATH); } catch(e){ ws=null; startSSE(); startPolling(); return; }
-    ws.addEventListener('open', ()=>{ reconnectAttempts = 0; try{ ws.send(JSON.stringify({ type:'subscribe', channel:'files' })); } catch(e){} });
-    ws.addEventListener('message', ev => { try{ const msg = JSON.parse(ev.data); bufferAndFlush(msg); } catch(e){ console.error(e); } });
-    ws.addEventListener('close', ()=>{ ws=null; startSSE(); scheduleReconnect(); });
-    ws.addEventListener('error', ()=>{ try{ ws.close(); } catch(e){} });
-  }
-  function scheduleReconnect(){ reconnectAttempts++; const delay = Math.min(30000, 1000 * Math.pow(1.6, Math.min(10,reconnectAttempts))); setTimeout(()=>{ if(!ws) connectWebSocket(); }, delay); }
+    function updateEmpty(){
+      var empty = document.getElementById('emptyMessage');
+      var len = (window.viewFiles && window.viewFiles.length) ? window.viewFiles.filter(function(x){ return !x.__groupHeader; }).length : buildOrderedList(window.allFiles||[]).filter(function(x){ return !x.__groupHeader; }).length;
+      empty.style.display = (len === 0) ? 'block' : 'none';
+    }
 
-  function startSSE(){
-    if(typeof EventSource === 'undefined'){ startPolling(); return; }
-    if(es) return;
-    try{ es = new EventSource(CONFIG.SSE_PATH); } catch(e){ es=null; startPolling(); return; }
-    es.onmessage = ev => { try{ const msg = JSON.parse(ev.data); bufferAndFlush(msg); } catch(e){ console.error(e); } };
-    es.onerror = ()=>{ try{ es.close(); } catch(e){} es=null; startPolling(); };
-  }
+    window.allFiles = [];
+    window.viewFiles = [];
 
-  function startPolling(){
-    if(pollTimer) return;
-    pollTimer = setInterval(()=> {
-      fetch(CONFIG.FILES_PATH, { cache:'no-store' })
-        .then(res => res.ok ? res.json() : Promise.reject('err'))
-        .then(data => {
-          const arr = [];
-          if (data && data.ok && Array.isArray(data.result)) {
-            for (const bucket of data.result) {
-              if (bucket && Array.isArray(bucket.objects)) {
-                for (const o of bucket.objects) {
-                  const key = o.key || o.name || '';
-                  const keyNorm = normalizeKeyName(key);
-                  const last = parseDateLike(o);
-                  arr.push({ name: keyNorm, originalName: key, url: o.url || '', size: Number(o.size) || 0, lastModified: Number(last), bucket: bucket.bucket || null, key: o.key || null });
-                }
-              }
-            }
-          } else if (Array.isArray(data)) {
-            for (const f of data) {
-              const key = f.key || f.name || '';
-              const keyNorm = normalizeKeyName(key);
-              const last = parseDateLike(f);
-              arr.push({ name: keyNorm, originalName: key, url: f.url || '', size: Number(f.size) || 0, lastModified: Number(last), bucket: f.bucket || null, key: f.key || null });
-            }
-          }
-          // dedupe by normalized name prefer newest
-          const byName = new Map();
-          for(const it of arr){
-            if(!it.url) continue;
-            const n = normalizeKeyName(it.originalName || it.name || '');
-            if(!byName.has(n) || byName.get(n).lastModified < it.lastModified) byName.set(n, it);
-          }
-          const unique = Array.from(byName.values());
-          unique.sort((a,b) => Number(b.lastModified || 0) - Number(a.lastModified || 0));
-          window.allFiles = unique.slice(0, CONFIG.METADATA_CAP);
-          fullRerender();
-        }).catch(()=>{});
-    }, CONFIG.POLL_INTERVAL_MS);
-  }
-  function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+    async function loadFiles(){
+      try{
+        var res = await fetch(CONFIG.FILES_PATH, { cache:'no-store' });
+        if(!res.ok) throw new Error('fetch failed');
+        var data = await res.json();
+        var files = [];
+        if(Array.isArray(data)){
+          data.forEach(function(f){ var key = f.key || f.name || ''; files.push({ name: normalizeKeyName(key), originalName: key, url: f.url || '', size: Number(f.size) || 0, lastModified: Number(f.lastModified || Date.now()), key: f.key || null }); });
+        } else if(data && data.ok && Array.isArray(data.result)){
+          data.result.forEach(function(bucket){ if(bucket && Array.isArray(bucket.objects)) bucket.objects.forEach(function(o){ var key = o.key || o.name || ''; files.push({ name: normalizeKeyName(key), originalName: key, url: o.url || '', size: Number(o.size) || 0, lastModified: Number(o.lastModified || Date.now()), key: o.key || null }); }); });
+        } else if(data && Array.isArray(data.objects)){
+          data.objects.forEach(function(o){ var key = o.key || o.name || ''; files.push({ name: normalizeKeyName(key), originalName: key, url: o.url || '', size: Number(o.size) || 0, lastModified: Number(o.lastModified || Date.now()), key: o.key || null }); });
+        }
+        var byName = new Map();
+        files.forEach(function(it){ if(!it.url) return; var n = normalizeKeyName(it.originalName || it.name || ''); if(!byName.has(n) || (byName.get(n).lastModified < it.lastModified)) byName.set(n, it); });
+        var unique = Array.from(byName.values());
+        unique.sort(function(a,b){ return Number(b.lastModified || 0) - Number(a.lastModified || 0); });
+        window.allFiles = unique.slice(0, CONFIG.METADATA_CAP);
+        renderChunked(window.allFiles);
+      }catch(e){}
+    }
 
-  function copyUrl(url){ if(!url) return; if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(()=>{}); else { const ta=document.createElement('textarea'); ta.value=url; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} ta.remove(); } }
-  window.copyUrl = copyUrl;
-
-  document.getElementById('showNewBtn').style.display = 'none';
-  document.getElementById('newIndicator').style.display = 'none';
-
-  function connectInitial(){
     loadFiles();
-    connectWebSocket();
-    setTimeout(()=>{ if(!ws) startSSE(); }, 1500);
-    setTimeout(()=>{ if(!ws && !es) startPolling(); }, 2500);
-    window.addEventListener('beforeunload', ()=>{ try{ if(ws) ws.close(); }catch(e){} try{ if(es) es.close(); }catch(e){} stopPolling(); });
-  }
+    setInterval(loadFiles, CONFIG.POLL_INTERVAL_MS);
 
-  connectInitial();
+    var searchInput = document.getElementById('searchInput');
+    function applySearch(){
+      var q = (searchInput.value || '').trim().toLowerCase();
+      if(!q){ window.viewFiles = []; renderChunked(window.allFiles); return; }
+      var ordered = buildOrderedList(window.allFiles || []);
+      window.viewFiles = ordered.filter(function(f){
+        if(f.__groupHeader) return (f.base||'').toLowerCase().indexOf(q) !== -1;
+        return ((f.name||'').toLowerCase().indexOf(q) !== -1) || ((f.url||'').toLowerCase().indexOf(q) !== -1) || (parseParts(f.name||'').base||'').toLowerCase().indexOf(q) !== -1;
+      });
+      renderChunked(window.viewFiles);
+    }
+    var debounceTimer = null;
+    searchInput.addEventListener('input', function(){ clearTimeout(debounceTimer); debounceTimer = setTimeout(applySearch, 140); });
 
-  document.addEventListener('gesturestart', function(e){ try{ e.preventDefault(); }catch(e){} });
-  document.addEventListener('touchmove', function(e){ try{ if(e.scale !== undefined && e.scale !== 1) e.preventDefault(); }catch(e){} }, { passive:false });
+    function ensureSentinel(){ var listEl = document.getElementById('fileList'); var sentinel = document.getElementById('render-sentinel'); if(!sentinel){ sentinel = document.createElement('div'); sentinel.id = 'render-sentinel'; sentinel.style.width='1px'; sentinel.style.height='1px'; sentinel.style.opacity='0'; listEl.appendChild(sentinel); } else listEl.appendChild(sentinel); }
 
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => { console.log('Service worker registered.', reg); })
-        .catch(err => { console.warn('Service worker registration failed:', err); });
-    });
-  }
+    document.addEventListener('gesturestart', function(e){ try{ e.preventDefault(); }catch(e){} });
+    document.addEventListener('touchmove', function(e){ try{ if(e.scale !== undefined && e.scale !== 1) e.preventDefault(); }catch(e){} }, { passive:false });
 
-})();
+  })();
   </script>
 </body>
   </html>
