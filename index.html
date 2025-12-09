@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Stream7</title>
+  <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f1724">
+<link rel="icon" href="https://stream7.pages.dev/icons/icon-512.png" sizes="512x512" />
+<link rel="apple-touch-icon" href="https://stream7.pages.dev/icons/icon-512.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root{
@@ -566,5 +570,23 @@
 
   })();
   </script>
+  <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { scope: '/' })
+    .then(reg => {
+      console.log('SW registered', reg);
+      // optional: listen for updates
+      reg.addEventListener && reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker && newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed') {
+            // a new service worker is installed
+            console.log('New SW installed');
+          }
+        });
+      });
+    }).catch(err => console.warn('SW register failed', err));
+}
+          </script>
 </body>
   </html>
