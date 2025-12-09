@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Stream7</title>
   <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0f1724">
-<link rel="icon" href="https://stream7.pages.dev/icons/icon-512.png" sizes="512x512" />
-<link rel="apple-touch-icon" href="https://stream7.pages.dev/icons/icon-512.png">
+  <meta name="theme-color" content="#0f1724">
+  <link rel="icon" href="https://stream7.pages.dev/icons/icon-512.png" sizes="512x512" />
+  <link rel="apple-touch-icon" href="https://stream7.pages.dev/icons/icon-512.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root{
@@ -39,7 +39,8 @@
     .btn{background:var(--accent);color:#fff;border-radius:10px;padding:7px 12px;border:none;font-size:13px;cursor:pointer}
     .suburl{font-size:12px;color:#888;word-break:break-all;margin-top:8px}
     .badge{background:var(--pill);color:#fff;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
-    .group-head{grid-column:1/-1;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,0.03);font-weight:700;color:#111;margin-bottom:4px}
+    .group-head{grid-column:1/-1;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,0.03);font-weight:700;color:#111;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .group-head .title-left{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .season-head{grid-column:1/-1;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,0.02);font-weight:700;color:#222;margin-top:6px}
     .empty{padding:40px;text-align:center;color:var(--muted)}
     @media (max-width:520px){ .title{font-size:15px} .play-prompt{font-size:15px} .btn{padding:6px 10px} }
@@ -85,7 +86,7 @@
 
       var lastAlpha = -1;
       for(var i=0;i<parts.length;i++){
-        if(/\p{L}/u.test(parts[i])) lastAlpha = i;
+        try{ if(/\p{L}/u.test(parts[i])) lastAlpha = i; }catch(e){}
       }
 
       function extractNumsFromTok(tok, out){
@@ -209,6 +210,18 @@
     function insertSoftBreaks(str,maxLen){ if(!str) return ''; maxLen = maxLen || 40; return str.replace(/\S+/g,function(chunk){ if(chunk.length <= maxLen) return chunk; var out=''; for(var i=0;i<chunk.length;i+=maxLen){ out += chunk.slice(i, i+maxLen); if(i+maxLen<chunk.length) out += '\u200b'; } return out; }); }
     function copyUrl(url){ if(!url) return; if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(function(){}); else { var ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} ta.remove(); } }
 
+    // helper for copying text (used by "Copier tous")
+    function copyTextToClipboard(text, done){
+      if(!text) return;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ if(done) done(true); }).catch(function(){ // fallback
+          try { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); if(done) done(true); } catch(e) { if(done) done(false); }
+        });
+      } else {
+        try { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); if(done) done(true); } catch(e) { if(done) done(false); }
+      }
+    }
+
     var playingMap = new Map();
     function attachPlaybackTracking(vidEl, url){
       function markPlaying(){ playingMap.set(url, { el: vidEl, lastPlayTs: Date.now(), position: vidEl.currentTime || 0 }); }
@@ -240,7 +253,77 @@
 
     function createCardElement(f){
       if(f.__groupHeader){
-        var head = document.createElement('div'); head.className = 'group-head'; head.textContent = (f.base || '(sans nom)').replace(/[_\-\s]+/g,' ').trim(); return head;
+        var head = document.createElement('div'); head.className = 'group-head';
+        head.dataset.base = f.base || '';
+
+        var left = document.createElement('div'); left.className = 'title-left';
+        left.textContent = (f.base || '(sans nom)').replace(/[_\-\s]+/g,' ').trim();
+
+        head.appendChild(left);
+
+        // only show "Copier tous" if itemCount >= 2
+        var count = Number(f.itemCount || 0);
+        if(count >= 2){
+          var copyAllBtn = document.createElement('button');
+          copyAllBtn.className = 'btn';
+          copyAllBtn.textContent = 'Copier tous';
+          copyAllBtn.style.padding = '6px 10px';
+          copyAllBtn.style.fontSize = '12px';
+          copyAllBtn.title = 'Copier toutes les URLs (une par ligne) pour cette base';
+
+          copyAllBtn.addEventListener('click', function(ev){
+            ev.stopPropagation();
+            var baseKey = String(f.base || '');
+            var baseKeyNorm = normalizeString(baseKey || '');
+            var cards = Array.from(document.querySelectorAll('.card'));
+            var urls = [];
+
+            cards.forEach(function(c){
+              var cardBase = c.dataset.base || '';
+              try{ cardBase = decodeURIComponent(cardBase); }catch(e){}
+              var cardBaseNorm = normalizeString(cardBase || '');
+
+              if( cardBaseNorm === baseKeyNorm || basesSimilar(cardBaseNorm, baseKeyNorm) ){
+                var a = c.querySelector('a');
+                if(a && a.href) urls.push(a.href);
+                else if(c.dataset && c.dataset.url) urls.push(c.dataset.url);
+                else {
+                  var sub = c.querySelector('.suburl');
+                  if(sub) urls.push(sub.textContent.replace(/\u200b/g,'').trim());
+                }
+              }
+            });
+
+            // unique and preserve order
+            var seen = {};
+            var finalUrls = [];
+            urls.forEach(function(u){
+              if(!u) return;
+              if(!seen[u]){ seen[u] = true; finalUrls.push(u); }
+            });
+
+            if(finalUrls.length < 1){
+              return;
+            }
+            var payload = finalUrls.join('\n');
+            copyAllBtn.disabled = true;
+            copyTextToClipboard(payload, function(ok){
+              copyAllBtn.disabled = false;
+              if(ok){
+                var prev = copyAllBtn.textContent;
+                copyAllBtn.textContent = 'Copié !';
+                setTimeout(function(){ copyAllBtn.textContent = 'Copier tous'; }, 1200);
+              } else {
+                var prev = copyAllBtn.textContent;
+                copyAllBtn.textContent = 'Erreur';
+                setTimeout(function(){ copyAllBtn.textContent = 'Copier tous'; }, 1200);
+              }
+            });
+          });
+
+          head.appendChild(copyAllBtn);
+        }
+        return head;
       }
       if(f.__seasonHeader){
         var s = document.createElement('div'); s.className = 'season-head'; s.textContent = f.seasonLabel || (f.season === 'base' ? 'Base' : ('Saison ' + f.season)); return s;
@@ -530,17 +613,34 @@
         if(!res.ok) throw new Error('fetch failed');
         var data = await res.json();
         var files = [];
+
         if(Array.isArray(data)){
-          data.forEach(function(f){ var key = f.key || f.name || ''; files.push({ name: normalizeKeyName(key), originalName: key, url: f.url || '', size: Number(f.size) || 0, lastModified: Number(f.lastModified || Date.now()), key: f.key || null }); });
+          data.forEach(function(f){ var key = f.key || f.name || ''; var lm = null; if(f.uploaded) lm = Date.parse(f.uploaded); else if(f.lastModified) lm = Number(f.lastModified); files.push({ name: normalizeKeyName(key), originalName: key, url: f.url || '', size: Number(f.size) || 0, lastModified: Number(lm || Date.now()), key: f.key || null }); });
         } else if(data && data.ok && Array.isArray(data.result)){
-          data.result.forEach(function(bucket){ if(bucket && Array.isArray(bucket.objects)) bucket.objects.forEach(function(o){ var key = o.key || o.name || ''; files.push({ name: normalizeKeyName(key), originalName: key, url: o.url || '', size: Number(o.size) || 0, lastModified: Number(o.lastModified || Date.now()), key: o.key || null }); }); });
+          data.result.forEach(function(bucket){
+            if(bucket && Array.isArray(bucket.objects)){
+              bucket.objects.forEach(function(o){
+                var key = o.key || o.name || '';
+                var lm = null;
+                if(o.uploaded) lm = Date.parse(o.uploaded);
+                else if(o.uploadedAt) lm = Date.parse(o.uploadedAt);
+                else if(o.lastModified) lm = Number(o.lastModified);
+                files.push({ name: normalizeKeyName(key), originalName: key, url: o.url || (o.path ? o.path : ''), size: Number(o.size) || 0, lastModified: Number(lm || Date.now()), key: o.key || null });
+              });
+            }
+          });
         } else if(data && Array.isArray(data.objects)){
-          data.objects.forEach(function(o){ var key = o.key || o.name || ''; files.push({ name: normalizeKeyName(key), originalName: key, url: o.url || '', size: Number(o.size) || 0, lastModified: Number(o.lastModified || Date.now()), key: o.key || null }); });
+          data.objects.forEach(function(o){ var key = o.key || o.name || ''; var lm = null; if(o.uploaded) lm = Date.parse(o.uploaded); else if(o.lastModified) lm = Number(o.lastModified); files.push({ name: normalizeKeyName(key), originalName: key, url: o.url || '', size: Number(o.size) || 0, lastModified: Number(lm || Date.now()), key: o.key || null }); });
         }
+
         var byName = new Map();
-        files.forEach(function(it){ if(!it.url) return; var n = normalizeKeyName(it.originalName || it.name || ''); if(!byName.has(n) || (byName.get(n).lastModified < it.lastModified)) byName.set(n, it); });
+        files.forEach(function(it){
+          if(!it.url) return;
+          var n = normalizeKeyName(it.originalName || it.name || '');
+          if(!byName.has(n) || (toNum(byName.get(n).lastModified) < toNum(it.lastModified))) byName.set(n, it);
+        });
         var unique = Array.from(byName.values());
-        unique.sort(function(a,b){ return Number(b.lastModified || 0) - Number(a.lastModified || 0); });
+        unique.sort(function(a,b){ return toNum(b.lastModified) - toNum(a.lastModified); });
         window.allFiles = unique.slice(0, CONFIG.METADATA_CAP);
         renderChunked(window.allFiles);
       }catch(e){}
@@ -575,18 +675,16 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js', { scope: '/' })
     .then(reg => {
       console.log('SW registered', reg);
-      // optional: listen for updates
       reg.addEventListener && reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
         newWorker && newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed') {
-            // a new service worker is installed
             console.log('New SW installed');
           }
         });
       });
     }).catch(err => console.warn('SW register failed', err));
 }
-          </script>
+  </script>
 </body>
   </html>
